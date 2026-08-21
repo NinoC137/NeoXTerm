@@ -6,7 +6,7 @@ Security fixes are made against the current development branch. Ferry is pre-1.0
 
 ## Reporting a vulnerability
 
-Please do **not** open a public issue for a suspected vulnerability. Use [GitHub's private security advisory form](https://github.com/NinoC137/ferry/security/advisories/new) and include:
+Please do **not** open a public issue for a suspected vulnerability. Use [GitHub's private security advisory form](https://github.com/NinoC137/NeoXTerm/security/advisories/new) and include:
 
 - a concise description and impact;
 - affected Ferry revision and host OS;

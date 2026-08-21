@@ -46,8 +46,8 @@ Ferry 仍处于早期阶段，但目标是服务真实的实验室与板级 brin
 从源码构建 CLI：
 
 ```bash
-git clone https://github.com/NinoC137/ferry.git
-cd ferry
+git clone https://github.com/NinoC137/NeoXTerm.git
+cd NeoXTerm
 cargo build --release
 
 # 安装到 PATH 中已有的目录。

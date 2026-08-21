@@ -46,8 +46,8 @@ Embedded work tends to fracture across SSH, ADB, serial tools, ad-hoc copy scrip
 Build the CLI from a checkout:
 
 ```bash
-git clone https://github.com/NinoC137/ferry.git
-cd ferry
+git clone https://github.com/NinoC137/NeoXTerm.git
+cd NeoXTerm
 cargo build --release
 
 # Install into a directory already in PATH.

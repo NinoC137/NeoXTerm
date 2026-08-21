@@ -1,7 +1,7 @@
 [package]
-name = "ferry-desktop"
+name = "neoxterm-desktop"
 version = "0.1.0"
-description = "Desktop workbench for ferry devices"
+description = "Desktop workbench for NeoXTerm devices"
 edition = "2021"
 rust-version = "1.77.2"
 
@@ -9,6 +9,6 @@ rust-version = "1.77.2"
 tauri-build = { version = "2.5.0", features = [] }
 
 [dependencies]
-ferry = { path = "../.." }
+ferry = { package = "neoxterm", path = "../.." }
 serde = { version = "1", features = ["derive"] }
 tauri = { version = "2.10.0", features = [] }

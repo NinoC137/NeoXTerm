@@ -12,15 +12,15 @@ Thank you for helping make embedded bring-up more repeatable.
 ## Development setup
 
 ```bash
-git clone https://github.com/NinoC137/ferry.git
-cd ferry
-cargo test -p ferry --lib
+git clone https://github.com/NinoC137/NeoXTerm.git
+cd NeoXTerm
+cargo test -p neoxterm --lib
 
 cd desktop
 npm ci
 npm run build
 cd ..
-cargo check -p ferry-desktop
+cargo check -p neoxterm-desktop
 ```
 
 Use the narrowest relevant check. This repository intentionally has some pre-existing formatting drift; run `rustfmt` only on Rust files you changed, rather than formatting the entire workspace.
