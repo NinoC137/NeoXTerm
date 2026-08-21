@@ -1,74 +1,37 @@
-# Ferry
+# NeoXTerm
 
-> One workbench for the trip between your host and an embedded Linux or Android target.
+> One workbench for moving between a host and embedded Linux or Android targets.
 
-**Ferry** is a zero-dependency Rust CLI (`fy`) and optional native desktop workbench for lab bring-up. It gives SSH, ADB, and serial-console targets one profile model and one operational vocabulary: discover a board, recognise it after an address change, open a shell, move artifacts with verification, recover connectivity, collect hardware facts, or keep a serial crash recorder running.
+**NeoXTerm** is a zero-dependency Rust CLI and optional native desktop workbench for lab bring-up. It gives SSH, ADB, and serial-console targets one device-profile model: discover a board, recognise it after its endpoint changes, open a shell, transfer artifacts with verification, recover connectivity, or collect hardware facts.
 
-[中文文档](README.zh-CN.md) · [Documentation](docs/README.md) · [Architecture](docs/architecture.md) · [Operations guide](docs/operations.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+[中文说明](README.zh-CN.md) · [Documentation](docs/README.md) · [Operations](docs/operations.md) · [Architecture](docs/architecture.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
 
-## Status
+## What it is for
 
-Ferry is early-stage but intended for real lab and bring-up work. The `fy` CLI is the stable automation surface. The browser workbench (`fy ui`) and native Tauri app are interactive clients over the same Ferry modules.
+Embedded work is often split between SSH, ADB, serial tools, copy scripts, and temporary network setup. NeoXTerm keeps the connection path, observed identity, and routine operations under one saved device name.
 
-## Why Ferry?
-
-Embedded work tends to fracture across SSH, ADB, serial tools, ad-hoc copy scripts, network setup, and notes that do not survive a board reflash. Ferry keeps the device profile, observed identity, and operational workflows together.
-
-| Situation | Ferry workflow | What it gives you |
-| --- | --- | --- |
-| A board moved after DHCP or reflash | `fy scan`, `fy info` | mDNS/TCP discovery and MAC/fingerprint recognition |
-| Only a serial console is alive | `fy up`, `fy bb` | Recovery path and persistent crash recording |
-| A large image transfer stopped | `fy push`, `fy pull` | Resume, prefix validation, and integrity verification |
-| A target needs host connectivity | `fy share`, `fy usb net` | Proxy tunnel by default; explicit NAT when needed |
-| A connection keeps dropping | `fy fwd`, `fy watch` | Managed forwards and replay after reconnect |
-| You need evidence of the hardware | `fy hw` | Read-only procfs/sysfs/live-device-tree inventory |
-| A script or agent calls Ferry | `fy --json` | One JSON document on stdout and non-interactive failures |
-
-## Highlights
-
-- **Three transports, one profile:** SSH, ADB, and serial consoles use the same device name across operations.
-- **Identity-aware discovery:** verified SSH banners and authorised network ADB endpoints only; saved facts help recognise boards after an IP or USB-port change.
-- **Reliable transfer and deploy:** resumable, verified transfers; board-to-board copy through the host; `run`, `debug`, and `sync` workflows.
-- **Connectivity and recovery:** forwards, connection watching, proxy/NAT sharing, USB networking, serial-to-SSH promotion, and serial black-box recording.
-- **Hardware evidence:** a read-only collector produces `hardware.json`, an optional `peripherals.md`, and a raw device-tree archive when available.
-- **Reviewable extensions:** local plugin packages declare their requirements, risk, arguments, and a dry-run preview before execution.
-- **Two interactive workbenches:** a local browser PTY and a Tauri desktop app with fleet, discovery, terminal, operations, and plugin views.
+- **One profile across transports** — SSH, ADB, and serial operations address the same device name.
+- **Identity-aware discovery** — verified endpoints and saved fingerprints help reclaim a board after DHCP, reflashing, or a USB-port change.
+- **Reliable operations** — resumable and verified transfer, shell/command execution, port forwarding, connectivity sharing, and serial recovery.
+- **Hardware evidence** — a read-only collector can save `hardware.json`, an optional peripheral summary, and a device-tree archive.
+- **Automation and desktop UI** — `fy --json`, a local browser terminal, and an optional Tauri application use the same core.
 
 ## Install
 
-### Prerequisites
-
-- Rust stable (the desktop crate requires Rust 1.77.2 or newer)
-- OpenSSH client; OpenSSH 8.4 or newer is recommended
-- Optional: Android Platform Tools (`adb`)
-- Optional: `rsync` for the fastest sync path
-
-Build the CLI from a checkout:
+Requires Rust stable (Rust 1.77.2+ for the desktop app) and OpenSSH. `adb` and `rsync` are optional.
 
 ```bash
 git clone https://github.com/NinoC137/NeoXTerm.git
 cd NeoXTerm
 cargo build --release
-
-# Install into a directory already in PATH.
 install -m755 target/release/fy /usr/local/bin/fy
 
-fy --version
 fy doctor
 ```
 
-Ferry stores local state in `~/.config/ferry/`:
+The CLI remains `fy`. Existing local profiles and facts remain compatible after the rename.
 
-```text
-devices.toml  saved device profiles
-facts/        observed identity fingerprints and hardware facts
-state.toml    forwards, shares, black boxes, and watcher state
-plugins/      installed local extension packages
-```
-
-### Native desktop app
-
-The optional desktop workbench lives in [`desktop/`](desktop). It needs the normal Tauri macOS prerequisites in addition to Rust and Node.js.
+To run the desktop app (with Node.js and the normal Tauri prerequisites):
 
 ```bash
 cd desktop
@@ -77,112 +40,49 @@ npm run tauri dev       # development
 npm run tauri build     # release bundle
 ```
 
-On macOS, the release bundle is created at `target/release/bundle/macos/Ferry Desktop.app`. The CLI remains the preferred interface for scripts and CI.
+The macOS bundle is written to `target/release/bundle/macos/NeoXTerm.app`.
 
 ## Quick start
 
-Create a profile for a target. A transport is the current path to a device, not a permanent constraint: a serial device can later be promoted to SSH.
+Create a profile, then reuse its name for every operation. The selected transport is only the current path: a serial-only board can later be promoted to SSH.
 
 ```bash
-# SSH target
 fy add rk --ssh root@192.168.1.37
-
-# Legacy Dropbear/OpenSSH target
-fy add old-board --ssh root@10.0.0.5 --legacy
-
-# One connected ADB device, or specify a serial/IP explicitly
 fy add phone --adb
-
-# Serial console
 fy add mcu --serial /dev/tty.usbserial-1420 --baud 1500000
+
+fy scan --add                   # discover and save reachable devices
+fy sh rk                         # open a shell
+fy sh rk -- uname -a             # run one command
+fy info rk                       # inspect saved identity facts
+fy push rk ./app /tmp/           # verified, resumable upload
+fy run rk ./app --help           # upload, run, return remote exit code
 ```
 
-Discover first when you do not know the endpoint:
+## Common tasks
 
-```bash
-fy scan
-fy scan --add
-```
-
-Then use the same name across workflows:
-
-```bash
-fy                         # reachability and saved identity facts
-fy sh rk                    # interactive shell
-fy sh rk -- uname -a        # one remote command
-fy info rk                  # identity card
-fy push rk ./app /tmp/      # verified, resumable upload
-fy run rk ./app --help      # upload, chmod, run, return remote exit code
-```
-
-## Common workflows
-
-| Goal | Start here |
+| Need | Start with |
 | --- | --- |
-| Find and identify a board | [`fy scan`, `fy info`](docs/operations.md#discover-and-identify) |
-| Shell, logs, and parallel commands | [`fy sh`, `fy log`, `fy all`](docs/operations.md#operate-targets) |
+| Find or identify a board | [`fy scan`, `fy info`](docs/operations.md#discover-and-identify) |
+| Shell, logs, or parallel commands | [`fy sh`, `fy log`, `fy all`](docs/operations.md#operate-targets) |
 | Transfer, deploy, or debug | [`fy push`, `fy run`, `fy debug`, `fy sync`](docs/operations.md#transfer-and-deploy) |
-| Forward ports or lend a network | [`fy fwd`, `fy share`, `fy net`](docs/operations.md#connectivity-and-networking) |
+| Forward ports or share connectivity | [`fy fwd`, `fy share`, `fy net`](docs/operations.md#connectivity-and-networking) |
 | Recover a serial-only board | [`fy bb`, `fy blame`, `fy up`](docs/operations.md#serial-recovery) |
-| Collect a hardware report | [`fy hw`](docs/operations.md#hardware-inventory) |
-| Add an audited local workflow | [`fy plugin`](docs/operations.md#local-plugins) |
-| Build a machine integration | [`fy --json`, `fy help --json`](docs/operations.md#automation-and-json) |
+| Collect hardware facts or add a local extension | [`fy hw`, `fy plugin`](docs/operations.md#hardware-inventory) |
+| Integrate with a script or agent | [`fy --json`, `fy help --json`](docs/operations.md#automation-and-json) |
 
-## Interactive workbenches
+Run `fy ui` for the local browser terminal. The Tauri desktop app adds fleet overview, profile editing, terminals, guarded operations, and plugins; high-impact actions show a preflight plan first.
 
-### Browser workbench
+## Safety and development
 
-```bash
-fy ui
-fy ui --port 8000 --no-open
-```
-
-`fy ui` binds to `127.0.0.1` by default. Its main surface is a real system PTY rendered with xterm.js over a persistent WebSocket, so `vim`, completion, Ctrl-C, full-screen tools, and long-running commands behave as they do in a normal terminal.
-
-### Desktop workbench
-
-The Tauri app offers a fleet overview, verified network discovery, editable profile drafts, xterm sessions, transfer/forward/top/black-box controls, guarded network and recovery workflows, and a plugin workbench. High-impact workflows expose a preflight plan before execution. See [the architecture guide](docs/architecture.md#interactive-clients) for the client boundary and security constraints.
-
-## Documentation
-
-| Document | Contents |
-| --- | --- |
-| [Documentation index](docs/README.md) | Navigation for English and Chinese materials |
-| [Operations guide](docs/operations.md) | Command-oriented workflows, safety notes, and plugins |
-| [Architecture](docs/architecture.md) | Modules, state model, transport boundaries, and clients |
-| [中文操作指南](docs/operations.zh-CN.md) | 中文命令与操作说明 |
-| [中文架构说明](docs/architecture.zh-CN.md) | 中文架构、状态与客户端说明 |
-| [`fy --help`](#quick-start) | The installed version's authoritative command list |
-
-## Safety
-
-Ferry can alter target and host state. Read the plan and use `fy --dry-run` before changing device, routing, firewall, or service configuration.
-
-- `fy share --nat` and `fy usb net --share` can require `sudo` and change host forwarding, firewall, or interface state.
-- `fy up`, USB-gadget installation, and persistent proxy settings may change target network or boot-time configuration.
-- A saved profile may contain a password in `~/.config/ferry/devices.toml`; Ferry attempts mode `0600`. Prefer `fy keyup` and key-based authentication.
-- `--legacy` enables retired SSH algorithms for isolated legacy targets only.
-- Scan only networks you are authorised to probe.
-
-## Development
+Use `fy --dry-run` before actions that can change device networking, boot configuration, host routing, firewall rules, or services. `fy share --nat`, `fy usb net --share`, USB-gadget setup, and persistent proxy settings may require elevated privileges or change network state. Scan only networks you are authorised to probe; prefer `fy keyup` over storing passwords in a device profile.
 
 ```bash
-# Core library and CLI tests
-cargo test -p ferry --lib
-
-# Build the release CLI
+cargo test -p neoxterm --lib
 cargo build --release
 
-# Desktop checks
-cd desktop
-npm ci
-npm run build
-cd ..
-cargo check -p ferry-desktop
+cd desktop && npm ci && npm run build
+cd .. && cargo check -p neoxterm-desktop
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development expectations and [SECURITY.md](SECURITY.md) for responsible disclosure.
-
-## License
-
-Ferry is released under the [MIT License](LICENSE).
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development expectations and [SECURITY.md](SECURITY.md) for responsible disclosure. NeoXTerm is released under the [MIT License](LICENSE).
