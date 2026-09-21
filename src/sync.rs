@@ -1,4 +1,4 @@
-//! `fy sync`：保存即上板。轮询监视本地目录（零依赖、够快），
+//! `nxt sync`：保存即上板。轮询监视本地目录（零依赖、够快），
 //! 变化 → rsync / tar 管道 / adb push 增量部署 → 可选钩子命令（如重启服务）。
 
 use crate::adbx;
@@ -89,7 +89,7 @@ pub fn deploy(d: &Device, local: &Path, remote: &str, use_rsync: bool) -> std::i
         }
         Transport::Serial => Err(std::io::Error::new(
             std::io::ErrorKind::Other,
-            "串口没法同步文件，先 fy up 打通网络",
+            "串口没法同步文件，先 nxt up 打通网络",
         )),
     }
 }

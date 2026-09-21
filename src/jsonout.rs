@@ -1,18 +1,18 @@
-//! 零依赖 JSON 输出通道 —— ferry 面向 **AI agent / 脚本** 的机器接口。
+//! 零依赖 JSON 输出通道 —— neoxterm 面向 **AI agent / 脚本** 的机器接口。
 //!
 //! ## 契约（改了要同步改 README，agent 依赖它）
 //!
 //! - 加 `--json` 后，**stdout 有且只有一份 JSON 文档**；一切人类可读的过程信息
-//!   （`→ ssh ...`、进度条、提示）全部走 stderr。管道里 `fy --json ls | jq` 永远干净。
+//!   （`→ ssh ...`、进度条、提示）全部走 stderr。管道里 `nxt --json ls | jq` 永远干净。
 //! - `--json` 隐含 **非交互**：不会弹设备选择器、不会问 y/n。需要人拍板的地方直接
 //!   以 `NEED_INPUT` 失败，并在 `hint` 字段里说清楚该补哪个参数。
 //! - 成功: `{"ok":true,"cmd":"push","...":...}`
 //! - 失败: `{"ok":false,"cmd":"push","code":14,"error":"...","hint":"..."}`
-//! - **`ok` 字段是唯一权威判据**。退出码同样稳定（见 `code` 模块），但 `fy sh` /
-//!   `fy run` 会**透传远端命令的退出码**，理论上可能和 ferry 自己的码撞车 ——
+//! - **`ok` 字段是唯一权威判据**。退出码同样稳定（见 `code` 模块），但 `nxt sh` /
+//!   `nxt run` 会**透传远端命令的退出码**，理论上可能和 neoxterm 自己的码撞车 ——
 //!   撞车时以 `ok` 为准。
 //!
-//! 环境变量 `FERRY_JSON=1` 等价于全局加 `--json`（方便 agent 一次性设好）。
+//! 环境变量 `NEOXTERM_JSON=1` 等价于全局加 `--json`（方便 agent 一次性设好）。
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
@@ -56,7 +56,7 @@ fn cmd_name() -> String {
 
 // ---------------- 稳定退出码 ----------------
 
-/// ferry 自身的退出码。**只增不改**，agent 会硬编码这些数字。
+/// neoxterm 自身的退出码。**只增不改**，agent 会硬编码这些数字。
 pub mod code {
     /// 一切正常。
     pub const OK: i32 = 0;

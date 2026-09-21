@@ -1,4 +1,4 @@
-# Contributing to Ferry
+# Contributing to NeoXTerm
 
 Thank you for helping make embedded bring-up more repeatable.
 
@@ -7,7 +7,7 @@ Thank you for helping make embedded bring-up more repeatable.
 - Check existing issues and discussions before opening a large proposal.
 - Keep a change focused on one user-visible behaviour or one internal boundary.
 - Never include device passwords, private keys, serial logs with secrets, customer data, or private network topology in a report, fixture, or screenshot.
-- For behaviour that touches a board, state the transport, target OS, Ferry version, exact command, expected result, actual result, and any rollback performed.
+- For behaviour that touches a board, state the transport, target OS, NeoXTerm version, exact command, expected result, actual result, and any rollback performed.
 
 ## Development setup
 

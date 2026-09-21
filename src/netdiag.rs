@@ -1,4 +1,4 @@
-//! `fy net` —— 一条命令说清"板子的网到底哪儿坏了"。
+//! `nxt net` —— 一条命令说清"板子的网到底哪儿坏了"。
 //!
 //! 排查下位机网络问题时来回试的那几样，这里一次做完：
 //! 链路层（网口状态/MTU/收发错误）、可达性（TCP 建连延迟/抖动/丢包）、
@@ -240,7 +240,7 @@ fn rexec(d: &Device, cmd: &str) -> Option<String> {
 
 /// 一次 ssh 往返把板端该看的都看了。分段用哨兵行切开。
 fn board_probe(d: &Device, r: &mut NetReport) {
-    // 写成一行：`fy` 会把远端命令回显出来，多行脚本刷屏太难看
+    // 写成一行：`nxt` 会把远端命令回显出来，多行脚本刷屏太难看
     let script = "echo '#IF'; ip -o -4 addr show 2>/dev/null | grep -v ' lo ' || ifconfig 2>/dev/null; \
          echo '#ROUTE'; ip route show default 2>/dev/null || route -n 2>/dev/null | grep '^0.0.0.0'; \
          echo '#DNS'; grep -h nameserver /etc/resolv.conf 2>/dev/null; \
@@ -440,7 +440,7 @@ pub fn diagnose(d: &Device, count: u32, do_speed: bool) -> NetReport {
     };
     if d.transport == Transport::Serial {
         r.notes
-            .push("串口设备没有网络可测；先 `fy up` 爬升到 ssh".into());
+            .push("串口设备没有网络可测；先 `nxt up` 爬升到 ssh".into());
         return r;
     }
     info("① 探测可达性 ...");
@@ -451,7 +451,7 @@ pub fn diagnose(d: &Device, count: u32, do_speed: bool) -> NetReport {
     };
     if r.latency.recv == 0 {
         r.notes
-            .push("完全不通：先确认板子上电、线插好、IP 没变（fy scan 能帮你重新认领）".into());
+            .push("完全不通：先确认板子上电、线插好、IP 没变（nxt scan 能帮你重新认领）".into());
         return r;
     }
 
@@ -476,7 +476,7 @@ pub fn diagnose(d: &Device, count: u32, do_speed: bool) -> NetReport {
     // 结论性提示：把散落的数字翻译成"下一步做什么"
     if r.latency.loss_pct() > 0.0 {
         r.notes.push(format!(
-            "有 {:.0}% 的连接没建起来——链路不稳或板子 CPU 打满，看看 fy top",
+            "有 {:.0}% 的连接没建起来——链路不稳或板子 CPU 打满，看看 nxt top",
             r.latency.loss_pct()
         ));
     }
@@ -494,7 +494,7 @@ pub fn diagnose(d: &Device, count: u32, do_speed: bool) -> NetReport {
     }
     if r.gateway.is_empty() {
         r.notes
-            .push("板子没有默认路由：出不了子网。`fy share <设备>` 可以直接借主机的网".into());
+            .push("板子没有默认路由：出不了子网。`nxt share <设备>` 可以直接借主机的网".into());
     } else if r.gw_reachable == Some(false) {
         r.notes
             .push("默认网关不通：路由配了但网关不在或被隔离".into());
@@ -504,11 +504,11 @@ pub fn diagnose(d: &Device, count: u32, do_speed: bool) -> NetReport {
             .push("/etc/resolv.conf 里没有 nameserver：域名一律解析失败".into());
     } else if r.dns_ok == Some(false) {
         r.notes
-            .push("DNS 解析不动：`fy share <设备>` 的代理模式让主机替它解析，最省事".into());
+            .push("DNS 解析不动：`nxt share <设备>` 的代理模式让主机替它解析，最省事".into());
     }
     if r.inet_ok == Some(false) && r.dns_ok == Some(true) {
         r.notes
-            .push("能解析但出不去：多半被上游防火墙挡了，试 `fy share <设备>`".into());
+            .push("能解析但出不去：多半被上游防火墙挡了，试 `nxt share <设备>`".into());
     }
     if !r.proxy_env.is_empty() && r.proxy_env != "||" {
         r.notes.push(format!("板端已设代理: {}", r.proxy_env));

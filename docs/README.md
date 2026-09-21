@@ -1,6 +1,6 @@
 # NeoXTerm documentation
 
-This directory contains the maintained reference material for NeoXTerm. The installed CLI remains the authority for the exact command set in the version you run: use `fy --help` or `fy help --json` before automating a workflow.
+This directory contains the maintained reference material for NeoXTerm. The installed CLI remains the authority for the exact command set in the version you run: use `nxt --help` or `nxt help --json` before automating a workflow.
 
 | English | 中文 |
 | --- | --- |

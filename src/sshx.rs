@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 static KEYUP_ASKPASS_ID: AtomicU64 = AtomicU64::new(1);
 
 /// 公共 ssh 选项。lab 板子重刷是常态：独立 known_hosts + accept-new，
-/// 变了指纹用 `fy forget` 一键清除。
+/// 变了指纹用 `nxt forget` 一键清除。
 pub fn base_opts(d: &Device) -> Vec<String> {
     let mut o: Vec<String> = vec![];
     let kh = known_hosts().display().to_string();
@@ -79,7 +79,7 @@ pub fn target(d: &Device) -> String {
     format!("{}@{}", d.user, d.host)
 }
 
-/// 密码注入环境：让 ssh 回调 `fy __askpass`，从档案里取密码。
+/// 密码注入环境：让 ssh 回调 `nxt __askpass`，从档案里取密码。
 /// 免装 sshpass；需要 OpenSSH >= 8.4（macOS Ventura+ / 主流发行版都满足）。
 pub fn askpass_env(d: &Device) -> Vec<(String, String)> {
     if d.password.is_none() {
@@ -92,13 +92,13 @@ pub fn askpass_env(d: &Device) -> Vec<(String, String)> {
             "DISPLAY".into(),
             std::env::var("DISPLAY").unwrap_or_else(|_| ":0".into()),
         ),
-        ("FERRY_ASKPASS_DEV".into(), d.name.clone()),
+        ("NEOXTERM_ASKPASS_DEV".into(), d.name.clone()),
     ]
 }
 
-/// `fy __askpass` 入口：ssh 把提示词作为 argv 传来，我们输出密码。
+/// `nxt __askpass` 入口：ssh 把提示词作为 argv 传来，我们输出密码。
 pub fn askpass_main(_prompt: &str) -> i32 {
-    let dev = std::env::var("FERRY_ASKPASS_DEV").unwrap_or_default();
+    let dev = std::env::var("NEOXTERM_ASKPASS_DEV").unwrap_or_default();
     let cfg = crate::config::Config::load();
     if let Some(d) = cfg.devices.get(&dev) {
         if let Some(p) = &d.password {
@@ -290,7 +290,7 @@ pub fn identity_file(d: &Device) -> Option<String> {
 }
 
 /// Install a public key using an explicitly supplied, non-persistent password.
-/// GUI callers use this path because their executable is not the `fy` askpass
+/// GUI callers use this path because their executable is not the `nxt` askpass
 /// callback binary used by the CLI.
 pub fn keyup_with_password(d: &Device, password: Option<&str>) -> std::io::Result<()> {
     let home = crate::util::home();
@@ -331,7 +331,7 @@ pub fn keyup_with_password(d: &Device, password: Option<&str>) -> std::io::Resul
          grep -qF \"$k\" ~/.ssh/authorized_keys 2>/dev/null || echo \"$k\" >> ~/.ssh/authorized_keys; \
          if [ -d /etc/dropbear ]; then touch /etc/dropbear/authorized_keys; \
          grep -qF \"$k\" /etc/dropbear/authorized_keys 2>/dev/null || echo \"$k\" >> /etc/dropbear/authorized_keys; \
-         chmod 600 /etc/dropbear/authorized_keys; fi; echo FERRY_KEY_OK",
+         chmod 600 /etc/dropbear/authorized_keys; fi; echo NEOXTERM_KEY_OK",
         pubkey.replace('\'', "'\\''")
     );
     let out = if let Some(password) = password.filter(|password| !password.is_empty()) {
@@ -342,7 +342,7 @@ pub fn keyup_with_password(d: &Device, password: Option<&str>) -> std::io::Resul
     if dry() {
         return Ok(());
     }
-    if out.stdout.contains("FERRY_KEY_OK") {
+    if out.stdout.contains("NEOXTERM_KEY_OK") {
         ok(&format!("公钥已装入 {}，之后连接免密。", d.name));
         Ok(())
     } else {
@@ -378,17 +378,17 @@ fn exec_capture_with_password(d: &Device, command: &str, password: &str) -> std:
     use std::os::unix::fs::PermissionsExt;
 
     let script = std::env::temp_dir().join(format!(
-        "ferry-keyup-askpass-{}-{}",
+        "neoxterm-keyup-askpass-{}-{}",
         std::process::id(),
         KEYUP_ASKPASS_ID.fetch_add(1, Ordering::Relaxed)
     ));
-    std::fs::write(&script, "#!/bin/sh\nprintf '%s\\n' \"$FERRY_KEYUP_PASSWORD\"\n")?;
+    std::fs::write(&script, "#!/bin/sh\nprintf '%s\\n' \"$NEOXTERM_KEYUP_PASSWORD\"\n")?;
     std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o700))?;
     let env = vec![
         ("SSH_ASKPASS".into(), script.display().to_string()),
         ("SSH_ASKPASS_REQUIRE".into(), "force".into()),
         ("DISPLAY".into(), ":0".into()),
-        ("FERRY_KEYUP_PASSWORD".into(), password.into()),
+        ("NEOXTERM_KEYUP_PASSWORD".into(), password.into()),
     ];
     let result = run_capture(&ssh_argv(d, &[], Some(command)), &env);
     let _ = std::fs::remove_file(script);

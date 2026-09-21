@@ -1,4 +1,4 @@
-//! `fy serve` —— 局域网快传。
+//! `nxt serve` —— 局域网快传。
 //!
 //! 板子经常处在"scp 不通、但 HTTP 出得去"的状态：dropbear 没有 sftp、
 //! 只读 rootfs 里没有 scp、recovery 里只剩一个 busybox wget。这时候最快的路子
@@ -33,7 +33,7 @@ pub struct ServeOpts {
 
 struct Shared {
     /// (URL 里的名字, canonicalize 过的真实路径)。启动时算好，请求时只做查表，
-    /// 于是 `fy serve .`（basename 为空）和"两个 roots 同名"都不会再翻车。
+    /// 于是 `nxt serve .`（basename 为空）和"两个 roots 同名"都不会再翻车。
     roots: Vec<(String, PathBuf)>,
     upload_dir: Option<PathBuf>,
     token: String,
@@ -156,7 +156,7 @@ fn print_banner(
     if let Some(d) = for_dev {
         eprintln!();
         info(&format!(
-            "已按 {} 的路由选好地址；板子拉不动就先 `fy net {}` 看看网络",
+            "已按 {} 的路由选好地址；板子拉不动就先 `nxt net {}` 看看网络",
             d.name, d.name
         ));
     }
@@ -213,7 +213,7 @@ fn route(
 }
 
 /// 给每个 root 起一个 URL 上用的名字。
-/// `fy serve .` 的 basename 是空的，`fy serve a/build b/build` 会撞名——
+/// `nxt serve .` 的 basename 是空的，`nxt serve a/build b/build` 会撞名——
 /// 都在这里一次性摆平：先 canonicalize 拿到真名，再对重名加后缀。
 fn named_roots(roots: &[PathBuf]) -> Vec<(String, PathBuf)> {
     let mut out: Vec<(String, PathBuf)> = vec![];
@@ -340,10 +340,10 @@ fn render_listing(
         return httpd::ok_text(stream, &t);
     }
     let mut h = String::from(
-        "<!doctype html><meta charset=utf-8><title>ferry serve</title>\
+        "<!doctype html><meta charset=utf-8><title>nxt serve</title>\
          <style>body{font:14px/1.6 ui-monospace,Menlo,Consolas,monospace;margin:2rem;max-width:52rem}\
          a{text-decoration:none}td{padding:.15rem .8rem .15rem 0}\
-         .d{color:#06c}.s{color:#888;text-align:right}</style><h3>ferry serve</h3><table>",
+         .d{color:#06c}.s{color:#888;text-align:right}</style><h3>nxt serve</h3><table>",
     );
     for (name, size, is_dir) in rows {
         h.push_str(&format!(
@@ -523,7 +523,7 @@ fn read_chunked(
 
 // ---------------- CLI 入口 ----------------
 
-/// `fy serve` 的命令行参数打包（省得函数签名长到没法看）。
+/// `nxt serve` 的命令行参数打包（省得函数签名长到没法看）。
 pub struct ServeCli {
     pub roots: Vec<PathBuf>,
     pub port: u16,
@@ -586,8 +586,8 @@ pub fn serve_cmd(cli: ServeCli, for_dev: Option<&Device>) -> i32 {
         // JSON 模式不能常驻阻塞（agent 等不到结果），改成"给出计划"再后台起
         return fail(
             code::USAGE,
-            "fy serve 是常驻服务，--json 拿不到结果；要后台跑就 `fy serve ... &`，\
-             或者用 fy push/fy cp 做一次性传输",
+            "nxt serve 是常驻服务，--json 拿不到结果；要后台跑就 `nxt serve ... &`，\
+             或者用 nxt push/nxt cp 做一次性传输",
         );
     }
     match run(o, advertise, for_dev) {
@@ -613,7 +613,7 @@ mod tests {
 
     #[test]
     fn path_traversal_is_refused() {
-        let tmp = std::env::temp_dir().join(format!("ferry_serve_{}", std::process::id()));
+        let tmp = std::env::temp_dir().join(format!("neoxterm_serve_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(tmp.join("pub/sub")).unwrap();
         std::fs::write(tmp.join("pub/ok.txt"), b"hi").unwrap();
@@ -636,10 +636,10 @@ mod tests {
         let _ = std::fs::remove_dir_all(&tmp);
     }
 
-    /// `fy serve .` 是 README 上的默认用法：basename 为空时也必须能服务。
+    /// `nxt serve .` 是 README 上的默认用法：basename 为空时也必须能服务。
     #[test]
     fn dot_root_still_gets_a_usable_name() {
-        let tmp = std::env::temp_dir().join(format!("ferry_dot_{}", std::process::id()));
+        let tmp = std::env::temp_dir().join(format!("neoxterm_dot_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(&tmp).unwrap();
         std::fs::write(tmp.join("a.txt"), b"hi").unwrap();
@@ -660,7 +660,7 @@ mod tests {
     /// 两个 root 同名时，第二个要拿到带后缀的名字，而且两边都能访问。
     #[test]
     fn colliding_root_basenames_both_reachable() {
-        let tmp = std::env::temp_dir().join(format!("ferry_dual_{}", std::process::id()));
+        let tmp = std::env::temp_dir().join(format!("neoxterm_dual_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&tmp);
         std::fs::create_dir_all(tmp.join("a/build")).unwrap();
         std::fs::create_dir_all(tmp.join("b/build")).unwrap();

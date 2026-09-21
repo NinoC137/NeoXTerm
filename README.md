@@ -14,7 +14,7 @@ Embedded work is often split between SSH, ADB, serial tools, copy scripts, and t
 - **Identity-aware discovery** — verified endpoints and saved fingerprints help reclaim a board after DHCP, reflashing, or a USB-port change.
 - **Reliable operations** — resumable and verified transfer, shell/command execution, port forwarding, connectivity sharing, and serial recovery.
 - **Hardware evidence** — a read-only collector can save `hardware.json`, an optional peripheral summary, and a device-tree archive.
-- **Automation and desktop UI** — `fy --json`, a local browser terminal, and an optional Tauri application use the same core.
+- **Automation and desktop UI** — `nxt --json`, a local browser terminal, and an optional Tauri application use the same core.
 
 ## Install
 
@@ -24,12 +24,12 @@ Requires Rust stable (Rust 1.77.2+ for the desktop app) and OpenSSH. `adb` and `
 git clone https://github.com/NinoC137/NeoXTerm.git
 cd NeoXTerm
 cargo build --release
-install -m755 target/release/fy /usr/local/bin/fy
+install -m755 target/release/nxt /usr/local/bin/nxt
 
-fy doctor
+nxt doctor
 ```
 
-The CLI remains `fy`. Existing local profiles and facts remain compatible after the rename.
+The CLI is now `nxt` (formerly `fy`). Existing local profiles and facts remain compatible after the rename.
 
 To run the desktop app (with Node.js and the normal Tauri prerequisites):
 
@@ -47,35 +47,35 @@ The macOS bundle is written to `target/release/bundle/macos/NeoXTerm.app`.
 Create a profile, then reuse its name for every operation. The selected transport is only the current path: a serial-only board can later be promoted to SSH.
 
 ```bash
-fy add rk --ssh root@192.168.1.37
-fy add phone --adb
-fy add mcu --serial /dev/tty.usbserial-1420 --baud 1500000
+nxt add rk --ssh root@192.168.1.37
+nxt add phone --adb
+nxt add mcu --serial /dev/tty.usbserial-1420 --baud 1500000
 
-fy scan --add                   # discover and save reachable devices
-fy sh rk                         # open a shell
-fy sh rk -- uname -a             # run one command
-fy info rk                       # inspect saved identity facts
-fy push rk ./app /tmp/           # verified, resumable upload
-fy run rk ./app --help           # upload, run, return remote exit code
+nxt scan --add                   # discover and save reachable devices
+nxt sh rk                         # open a shell
+nxt sh rk -- uname -a             # run one command
+nxt info rk                       # inspect saved identity facts
+nxt push rk ./app /tmp/           # verified, resumable upload
+nxt run rk ./app --help           # upload, run, return remote exit code
 ```
 
 ## Common tasks
 
 | Need | Start with |
 | --- | --- |
-| Find or identify a board | [`fy scan`, `fy info`](docs/operations.md#discover-and-identify) |
-| Shell, logs, or parallel commands | [`fy sh`, `fy log`, `fy all`](docs/operations.md#operate-targets) |
-| Transfer, deploy, or debug | [`fy push`, `fy run`, `fy debug`, `fy sync`](docs/operations.md#transfer-and-deploy) |
-| Forward ports or share connectivity | [`fy fwd`, `fy share`, `fy net`](docs/operations.md#connectivity-and-networking) |
-| Recover a serial-only board | [`fy bb`, `fy blame`, `fy up`](docs/operations.md#serial-recovery) |
-| Collect hardware facts or add a local extension | [`fy hw`, `fy plugin`](docs/operations.md#hardware-inventory) |
-| Integrate with a script or agent | [`fy --json`, `fy help --json`](docs/operations.md#automation-and-json) |
+| Find or identify a board | [`nxt scan`, `nxt info`](docs/operations.md#discover-and-identify) |
+| Shell, logs, or parallel commands | [`nxt sh`, `nxt log`, `nxt all`](docs/operations.md#operate-targets) |
+| Transfer, deploy, or debug | [`nxt push`, `nxt run`, `nxt debug`, `nxt sync`](docs/operations.md#transfer-and-deploy) |
+| Forward ports or share connectivity | [`nxt fwd`, `nxt share`, `nxt net`](docs/operations.md#connectivity-and-networking) |
+| Recover a serial-only board | [`nxt bb`, `nxt blame`, `nxt up`](docs/operations.md#serial-recovery) |
+| Collect hardware facts or add a local extension | [`nxt hw`, `nxt plugin`](docs/operations.md#hardware-inventory) |
+| Integrate with a script or agent | [`nxt --json`, `nxt help --json`](docs/operations.md#automation-and-json) |
 
-Run `fy ui` for the local browser terminal. The Tauri desktop app adds fleet overview, profile editing, terminals, guarded operations, and plugins; high-impact actions show a preflight plan first.
+Run `nxt ui` for the local browser terminal. The Tauri desktop app adds fleet overview, profile editing, terminals, guarded operations, and plugins; high-impact actions show a preflight plan first.
 
 ## Safety and development
 
-Use `fy --dry-run` before actions that can change device networking, boot configuration, host routing, firewall rules, or services. `fy share --nat`, `fy usb net --share`, USB-gadget setup, and persistent proxy settings may require elevated privileges or change network state. Scan only networks you are authorised to probe; prefer `fy keyup` over storing passwords in a device profile.
+Use `nxt --dry-run` before actions that can change device networking, boot configuration, host routing, firewall rules, or services. `nxt share --nat`, `nxt usb net --share`, USB-gadget setup, and persistent proxy settings may require elevated privileges or change network state. Scan only networks you are authorised to probe; prefer `nxt keyup` over storing passwords in a device profile.
 
 ```bash
 cargo test -p neoxterm --lib

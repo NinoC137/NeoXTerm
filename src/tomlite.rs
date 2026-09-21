@@ -2,7 +2,7 @@
 //!
 //! 支持：`[table.subtable]` 小节、`key = value`，value 为
 //! 基本字符串 / 字面字符串 / 整数 / 布尔 / 字符串数组，`#` 注释。
-//! ferry 的 devices.toml / state.toml / facts 都用它读写。
+//! neoxterm 的 devices.toml / state.toml / facts 都用它读写。
 
 use std::collections::BTreeMap;
 use std::fmt::Write as _;

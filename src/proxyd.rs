@@ -1,4 +1,4 @@
-//! 内置代理守护进程（`fy __proxyd`）：让没网的板子借主机上网。
+//! 内置代理守护进程（`nxt __proxyd`）：让没网的板子借主机上网。
 //!
 //! 相比最初只会 HTTP CONNECT 的版本，现在是：
 //!
@@ -100,7 +100,7 @@ impl Upstream {
 pub fn main_loop(port: u16, up: Upstream) -> std::io::Result<()> {
     let listener = TcpListener::bind(("127.0.0.1", port))?;
     eprintln!(
-        "ferry proxyd 监听 127.0.0.1:{}（HTTP + SOCKS5 同端口），上游: {}",
+        "nxt proxyd 监听 127.0.0.1:{}（HTTP + SOCKS5 同端口），上游: {}",
         port,
         up.describe()
     );
@@ -225,7 +225,7 @@ fn handle_http(client: TcpStream, up: &Upstream) -> std::io::Result<()> {
     } else {
         let mut c = client;
         let _ = c.write_all(
-            "HTTP/1.1 400 Bad Request\r\n\r\nferry proxyd: 只支持 CONNECT 或绝对地址 http 请求\r\n"
+            "HTTP/1.1 400 Bad Request\r\n\r\nnxt proxyd: 只支持 CONNECT 或绝对地址 http 请求\r\n"
                 .as_bytes(),
         );
         Ok(())
@@ -401,7 +401,7 @@ fn connect_via(up: &Upstream, hostport: &str, default_port: u16) -> std::io::Res
             if hello[0] != S5_VER || hello[1] != 0x00 {
                 return Err(std::io::Error::new(
                     std::io::ErrorKind::PermissionDenied,
-                    "上游 SOCKS5 要求认证，ferry 目前只支持免认证上游",
+                    "上游 SOCKS5 要求认证，neoxterm 目前只支持免认证上游",
                 ));
             }
             let (host, port_s) = hostport
@@ -500,7 +500,7 @@ fn splice(
     Ok(())
 }
 
-// ---------------- 管理入口（fy share / fy proxy 用） ----------------
+// ---------------- 管理入口（nxt share / nxt proxy 用） ----------------
 
 pub fn current_upstream() -> Upstream {
     let st = crate::config::State::load();
@@ -681,9 +681,9 @@ mod tests {
         let rep = read_exact_n(&mut s, 10).unwrap();
         assert_eq!(rep[1], 0x00, "CONNECT 应该成功");
 
-        s.write_all(b"ferry").unwrap();
-        let back = read_exact_n(&mut s, 5).unwrap();
-        assert_eq!(&back, b"ferry", "隧道应该双向通");
+        s.write_all(b"neoxterm").unwrap();
+        let back = read_exact_n(&mut s, 8).unwrap();
+        assert_eq!(&back, b"neoxterm", "隧道应该双向通");
     }
 
     /// 同一个端口也要能认出 HTTP 代理请求。

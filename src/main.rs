@@ -1,4 +1,4 @@
-//! ferry (fy) — 上位机↔下位机摆渡人。
+//! NeoXTerm (nxt) — 上位机↔下位机摆渡人。
 //! ssh / adb / 串口 三种通道一套命令；设备档案 + 指纹认领 + 通道爬升 +
 //! 端口转发管理 + 借网 + USB 一键配网 + 保存即上板 + 串口黑匣子。
 
@@ -50,15 +50,16 @@ fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
 
     // ssh 把我们当 askpass 回调时：argv[0] 是提示词，且带环境变量标记
-    if std::env::var("FERRY_ASKPASS_DEV").is_ok() && !args.iter().any(|a| a == "__askpass") {
-        // ssh 调用形如: fy "user@host's password:"
+    if std::env::var("NEOXTERM_ASKPASS_DEV").is_ok() && !args.iter().any(|a| a == "__askpass") {
+        // ssh 调用形如: nxt "user@host's password:"
         if args.len() == 1 && !args[0].starts_with("__") && !known_command(&args[0]) {
             std::process::exit(sshx::askpass_main(&args[0]));
         }
     }
 
-    // 全局旗标。FERRY_JSON=1 等价于处处加 --json，方便 agent 一次设好。
-    let mut want_json = std::env::var("FERRY_JSON")
+    // 全局旗标。NEOXTERM_JSON=1 等价于处处加 --json，方便 agent 一次设好。
+    let mut want_json = std::env::var("NEOXTERM_JSON")
+        .or_else(|_| std::env::var("FERRY_JSON"))
         .map(|v| v != "0" && !v.is_empty())
         .unwrap_or(false);
     let mut rest: Vec<String> = vec![];
@@ -70,7 +71,7 @@ fn main() {
             "--json" => want_json = true,
             "-y" | "--yes" | "--non-interactive" => jsonout::set_noninteractive(true),
             "-V" | "--version" => {
-                println!("ferry {}", VERSION);
+                println!("nxt {}", VERSION);
                 return;
             }
             _ => rest.push(a),
@@ -134,8 +135,8 @@ fn dispatch(args: Vec<String>) -> i32 {
     if jsonout::json_mode() && !json_capable(&cmd) {
         return fail_hint(
             code::USAGE,
-            &format!("`fy {}` 还没有 --json 输出（它的输出是交互式/流式的）", cmd),
-            Some("机器可读的命令清单看 `fy help --json` 里的 commands[].json 字段"),
+            &format!("`nxt {}` 还没有 --json 输出（它的输出是交互式/流式的）", cmd),
+            Some("机器可读的命令清单看 `nxt help --json` 里的 commands[].json 字段"),
         );
     }
     match cmd.as_str() {
@@ -195,7 +196,7 @@ fn dispatch(args: Vec<String>) -> i32 {
         }
         "__bbd" => {
             if tail.len() < 3 {
-                eprintln!("usage: fy __bbd <name> <port> <baud>");
+                eprintln!("usage: nxt __bbd <name> <port> <baud>");
                 return 2;
             }
             let baud = tail[2].parse().unwrap_or(115200);
@@ -205,7 +206,7 @@ fn dispatch(args: Vec<String>) -> i32 {
         other => fail_hint(
             code::USAGE,
             &format!("不认识的命令 '{}'", other),
-            Some("fy --help 看全览；fy help --json 拿机器可读的命令清单"),
+            Some("nxt --help 看全览；nxt help --json 拿机器可读的命令清单"),
         ),
     }
 }
@@ -285,7 +286,7 @@ fn need_dev(cfg: &Config, name: Option<&str>) -> Result<Device, i32> {
             config::Pick::Missing => Err(fail_hint(
                 code::NO_DEVICE,
                 &format!("没有名为 '{}' 的设备档案", n),
-                Some("`fy ls` 看已有设备，`fy add <名字> --ssh root@IP` 添加，`fy scan` 自动发现"),
+                Some("`nxt ls` 看已有设备，`nxt add <名字> --ssh root@IP` 添加，`nxt scan` 自动发现"),
             )),
             config::Pick::Ambiguous(hits) => Err(fail_hint(
                 code::AMBIGUOUS,
@@ -298,7 +299,7 @@ fn need_dev(cfg: &Config, name: Option<&str>) -> Result<Device, i32> {
         return Err(fail_hint(
             code::NO_DEVICE,
             "还没有任何设备档案",
-            Some("先 `fy add <名字> --ssh root@IP` 或 `fy scan --add`"),
+            Some("先 `nxt add <名字> --ssh root@IP` 或 `nxt scan --add`"),
         ));
     }
     if cfg.devices.len() == 1 {
@@ -422,20 +423,20 @@ fn cmd_ls() -> i32 {
     }
 
     if cfg.devices.is_empty() {
-        println!("{}", bold("ferry — 上位机↔下位机摆渡人"));
+        println!("{}", bold("NeoXTerm — 上位机↔下位机摆渡人"));
         println!();
         println!("还没有设备档案。三种起步方式:");
         println!(
             "  {}   交互建档（ssh/adb/串口任一）",
-            cyan("fy add <名字> --ssh root@192.168.1.x")
+            cyan("nxt add <名字> --ssh root@192.168.1.x")
         );
         println!(
             "  {}                       扫描周围的板子并建档",
-            cyan("fy scan --add")
+            cyan("nxt scan --add")
         );
         println!(
             "  {}                    插 USB 线一键配网",
-            cyan("fy usb net")
+            cyan("nxt usb net")
         );
         return 0;
     }
@@ -464,7 +465,7 @@ fn cmd_ls() -> i32 {
     println!();
     println!(
         "{}",
-        dim("fy sh <设备> 进 shell · fy up <设备> 通道爬升 · fy net <设备> 网络体检 · fy --help 全览")
+        dim("nxt sh <设备> 进 shell · nxt up <设备> 通道爬升 · nxt net <设备> 网络体检 · nxt --help 全览")
     );
     0
 }
@@ -548,7 +549,7 @@ fn cmd_push(args: Vec<String>) -> i32 {
         if pos.is_empty() {
             return fail(
                 code::USAGE,
-                "用法: fy push --all <本地路径> [远端路径] [--only 前缀]",
+                "用法: nxt push --all <本地路径> [远端路径] [--only 前缀]",
             );
         }
         let local = PathBuf::from(&pos[0]);
@@ -558,7 +559,7 @@ fn cmd_push(args: Vec<String>) -> i32 {
     if pos.len() < 2 {
         return fail_hint(
             code::USAGE,
-            "用法: fy push <设备> <本地路径> [远端路径]",
+            "用法: nxt push <设备> <本地路径> [远端路径]",
             Some("批量分发用 --all；断点续传/校验默认开，可用 --no-resume / --no-verify / --force 调整"),
         );
     }
@@ -655,7 +656,7 @@ fn push_all(
                 devs.len(),
                 detail.join(" ")
             ),
-            Some("先 `fy ls` 看状态，或 `fy scan` 认领换了 IP 的板子"),
+            Some("先 `nxt ls` 看状态，或 `nxt scan` 认领换了 IP 的板子"),
         );
     }
     if !offline.is_empty() {
@@ -760,7 +761,7 @@ fn push_all(
 fn cmd_pull(args: Vec<String>) -> i32 {
     let pos = positional(&args, &[]);
     if pos.len() < 2 {
-        return fail(code::USAGE, "用法: fy pull <设备> <远端路径> [本地路径]");
+        return fail(code::USAGE, "用法: nxt pull <设备> <远端路径> [本地路径]");
     }
     let cfg = Config::load();
     let d = match need_dev(&cfg, Some(&pos[0])) {
@@ -795,8 +796,8 @@ fn cmd_cp(args: Vec<String>) -> i32 {
     if pos.len() < 2 {
         return fail_hint(
             code::USAGE,
-            "用法: fy cp <源> <目标>",
-            Some("路径写成 设备名:/板上路径 或本地路径；板↔板直传不落主机磁盘，例: fy cp rk:/tmp/a.bin cam:/data/"),
+            "用法: nxt cp <源> <目标>",
+            Some("路径写成 设备名:/板上路径 或本地路径；板↔板直传不落主机磁盘，例: nxt cp rk:/tmp/a.bin cam:/data/"),
         );
     }
     let cfg = Config::load();
@@ -821,7 +822,7 @@ fn cmd_cp(args: Vec<String>) -> i32 {
         }
         (Some((sd, sp)), Some((dd, mut dp))) => {
             if sd.name == dd.name {
-                return fail(code::USAGE, "源和目标是同一台设备，直接 fy sh 上去 cp 更快");
+                return fail(code::USAGE, "源和目标是同一台设备，直接 nxt sh 上去 cp 更快");
             }
             // 目标以 / 结尾 → 沿用源文件名
             if dp.ends_with('/') || dp.is_empty() {
@@ -885,7 +886,7 @@ fn cmd_add(args: Vec<String>) -> i32 {
         None => {
             return fail(
                 code::USAGE,
-                "用法: fy add <名字> [--ssh user@host[:port]] [--adb [serial]] [--serial /dev/xxx --baud 115200] [--password P] [--legacy]",
+                "用法: nxt add <名字> [--ssh user@host[:port]] [--adb [serial]] [--serial /dev/xxx --baud 115200] [--password P] [--legacy]",
             )
         }
     };
@@ -961,7 +962,7 @@ fn cmd_add(args: Vec<String>) -> i32 {
     ok(&format!("{} = {}", name, summary));
     if has_pw {
         info(&format!(
-            "密码明文存在 devices.toml (0600)。跑一次 fy keyup {} 就能转免密。",
+            "密码明文存在 devices.toml (0600)。跑一次 nxt keyup {} 就能转免密。",
             name
         ));
     }
@@ -981,7 +982,7 @@ fn cmd_rm(args: Vec<String>) -> i32 {
     let mut cfg = Config::load();
     let name = match args.first() {
         Some(n) => n.clone(),
-        None => return fail(code::USAGE, "用法: fy rm <设备>"),
+        None => return fail(code::USAGE, "用法: nxt rm <设备>"),
     };
     if cfg.devices.remove(&name).is_some() {
         if let Err(e) = cfg.save() {
@@ -1020,8 +1021,8 @@ fn cmd_sh(args: Vec<String>) -> i32 {
             _ => {
                 return fail_hint(
                     code::USAGE,
-                    "--json 模式下 fy sh 必须带一条命令",
-                    Some("写成 fy --json sh <设备> -- uname -a"),
+                    "--json 模式下 nxt sh 必须带一条命令",
+                    Some("写成 nxt --json sh <设备> -- uname -a"),
                 )
             }
         };
@@ -1031,7 +1032,7 @@ fn cmd_sh(args: Vec<String>) -> i32 {
             Transport::Serial => {
                 return fail(
                     code::UNSUPPORTED,
-                    "串口设备不支持一次性命令，先 fy up 爬到 ssh",
+                    "串口设备不支持一次性命令，先 nxt up 爬到 ssh",
                 )
             }
         };
@@ -1060,7 +1061,7 @@ fn cmd_sh(args: Vec<String>) -> i32 {
         (Transport::Serial, Some(_)) => {
             return fail(
                 code::UNSUPPORTED,
-                "串口设备不支持一次性命令，先 fy up 爬到 ssh",
+                "串口设备不支持一次性命令，先 nxt up 爬到 ssh",
             );
         }
     };
@@ -1076,9 +1077,9 @@ fn cmd_run(args: Vec<String>, is_debug: bool) -> i32 {
     let cfg = Config::load();
     if args.len() < 2 {
         err(if is_debug {
-            "用法: fy debug <设备> <可执行文件> [参数...] [--port 3333]"
+            "用法: nxt debug <设备> <可执行文件> [参数...] [--port 3333]"
         } else {
-            "用法: fy run <设备> <可执行文件> [参数...]"
+            "用法: nxt run <设备> <可执行文件> [参数...]"
         });
         return 2;
     }
@@ -1145,7 +1146,7 @@ fn cmd_fwd(args: Vec<String>) -> i32 {
                 fwd::remove(&cfg, id);
                 jsonout::emit_ok(vec![("removed", J::s(id))])
             }
-            None => fail(code::USAGE, "用法: fy fwd rm <ID|all>"),
+            None => fail(code::USAGE, "用法: nxt fwd rm <ID|all>"),
         },
         Some(dev) => {
             let spec =
@@ -1317,7 +1318,7 @@ fn cmd_usb(args: Vec<String>) -> i32 {
             }
         }
         other => {
-            err(&format!("fy usb 只有 net/gadget/install，没有 '{}'", other));
+            err(&format!("nxt usb 只有 net/gadget/install，没有 '{}'", other));
             2
         }
     }
@@ -1348,7 +1349,7 @@ fn cmd_sync(args: Vec<String>) -> i32 {
     let cfg = Config::load();
     let pos = positional(&args, &["--exec", "--ignore"]);
     if pos.len() < 3 {
-        err("用法: fy sync <设备> <本地目录> <远端目录> [--exec '重启命令'] [--once] [--ignore 名字]");
+        err("用法: nxt sync <设备> <本地目录> <远端目录> [--exec '重启命令'] [--once] [--ignore 名字]");
         return 2;
     }
     let d = match need_dev(&cfg, Some(&pos[0])) {
@@ -1434,7 +1435,7 @@ fn cmd_hw(args: Vec<String>) -> i32 {
             None => {
                 return fail(
                     code::USAGE,
-                    "用法: fy hw brief <hardware.json> [--out peripherals.md]",
+                    "用法: nxt hw brief <hardware.json> [--out peripherals.md]",
                 )
             }
         };
@@ -1461,7 +1462,7 @@ fn cmd_hw(args: Vec<String>) -> i32 {
     if pos.first().map(|s| s.as_str()) == Some("agent") {
         let out = match flag_val(&args, "--out") {
             Some(v) => PathBuf::from(v),
-            None => return fail(code::USAGE, "用法: fy hw agent --out ./hwprobe.sh"),
+            None => return fail(code::USAGE, "用法: nxt hw agent --out ./hwprobe.sh"),
         };
         if out.exists() {
             return fail(code::CONFIG, &format!("目标文件已存在: {}", out.display()));
@@ -1488,8 +1489,8 @@ fn cmd_hw(args: Vec<String>) -> i32 {
     if pos.is_empty() {
         return fail_hint(
             code::USAGE,
-            "用法: fy hw <设备> [--out 目录] [--no-bundle] [--no-brief] [--keep-remote] [--include-identifiers] [--max-dt-nodes N]；或 fy hw brief <hardware.json>",
-            Some("默认只读采集并清理目标端临时目录；fy hw agent --out ./hwprobe.sh 可单独导出脚本"),
+            "用法: nxt hw <设备> [--out 目录] [--no-bundle] [--no-brief] [--keep-remote] [--include-identifiers] [--max-dt-nodes N]；或 nxt hw brief <hardware.json>",
+            Some("默认只读采集并清理目标端临时目录；nxt hw agent --out ./hwprobe.sh 可单独导出脚本"),
         );
     }
     let d = match need_dev(&Config::load(), Some(&pos[0])) {
@@ -1597,7 +1598,7 @@ fn cmd_plugin(args: Vec<String>) -> i32 {
                 if items.is_empty() {
                     println!("No plugins installed.");
                     println!("Built-ins available: {}", plugins::builtin_ids().join(", "));
-                    println!("Install one with: fy plugin install sysroot-sync");
+                    println!("Install one with: nxt plugin install sysroot-sync");
                 } else {
                     for plugin in &items {
                         print_plugin(plugin);
@@ -1609,7 +1610,7 @@ fn cmd_plugin(args: Vec<String>) -> i32 {
         },
         "show" => {
             let Some(id) = args.get(1) else {
-                return fail(code::USAGE, "usage: fy plugin show <plugin-id>");
+                return fail(code::USAGE, "usage: nxt plugin show <plugin-id>");
             };
             match plugins::load(id) {
                 Ok(plugin) => {
@@ -1630,8 +1631,8 @@ fn cmd_plugin(args: Vec<String>) -> i32 {
             let Some(source) = args.get(1) else {
                 return fail_hint(
                     code::USAGE,
-                    "usage: fy plugin install <builtin-id|local-plugin-directory> [--force]",
-                    Some("Built-in: fy plugin install sysroot-sync; local packages need plugin.toml and its declared entrypoint"),
+                    "usage: nxt plugin install <builtin-id|local-plugin-directory> [--force]",
+                    Some("Built-in: nxt plugin install sysroot-sync; local packages need plugin.toml and its declared entrypoint"),
                 );
             };
             if jsonout::json_mode() {
@@ -1665,8 +1666,8 @@ fn cmd_plugin(args: Vec<String>) -> i32 {
             let (Some(id), Some(device_name)) = (args.get(1), args.get(2)) else {
                 return fail_hint(
                     code::USAGE,
-                    "usage: fy plugin run <plugin-id> <device> [-- plugin arguments]",
-                    Some("Example: fy plugin run sysroot-sync rk -- --dest /opt/sysroot"),
+                    "usage: nxt plugin run <plugin-id> <device> [-- plugin arguments]",
+                    Some("Example: nxt plugin run sysroot-sync rk -- --dest /opt/sysroot"),
                 );
             };
             let plugin = match plugins::load(id) {
@@ -1704,10 +1705,10 @@ fn cmd_plugin(args: Vec<String>) -> i32 {
             }
         }
         "help" | "-h" | "--help" => {
-            println!("fy plugin ls");
-            println!("fy plugin show <plugin-id>");
-            println!("fy plugin install <builtin-id|local-plugin-directory> [--force]");
-            println!("fy plugin run <plugin-id> <device> [-- plugin arguments]");
+            println!("nxt plugin ls");
+            println!("nxt plugin show <plugin-id>");
+            println!("nxt plugin install <builtin-id|local-plugin-directory> [--force]");
+            println!("nxt plugin run <plugin-id> <device> [-- plugin arguments]");
             println!();
             println!(
                 "Plugins are local, reviewable packages. {}.",
@@ -1718,7 +1719,7 @@ fn cmd_plugin(args: Vec<String>) -> i32 {
         }
         other => fail(
             code::USAGE,
-            &format!("fy plugin supports ls, show, install, run; not '{other}'"),
+            &format!("nxt plugin supports ls, show, install, run; not '{other}'"),
         ),
     }
 }
@@ -1779,7 +1780,7 @@ fn cmd_bb(args: Vec<String>) -> i32 {
                 blackbox::stop(n);
                 jsonout::emit_ok(vec![("device", J::s(n)), ("recording", J::b(false))])
             }
-            None => fail(code::USAGE, "用法: fy bb stop <设备>"),
+            None => fail(code::USAGE, "用法: nxt bb stop <设备>"),
         },
         None | Some("status") => {
             if jsonout::json_mode() {
@@ -1808,7 +1809,7 @@ fn cmd_bb(args: Vec<String>) -> i32 {
         }
         Some(other) => fail(
             code::USAGE,
-            &format!("fy bb 只有 start/stop/status，没有 '{}'", other),
+            &format!("nxt bb 只有 start/stop/status，没有 '{}'", other),
         ),
     }
 }
@@ -1821,7 +1822,7 @@ fn cmd_all(args: Vec<String>) -> i32 {
             return fail_hint(
                 code::USAGE,
                 "缺少要执行的命令",
-                Some("用法: fy all [设备前缀...] -- <命令>，例: fy all -- uname -a"),
+                Some("用法: nxt all [设备前缀...] -- <命令>，例: nxt all -- uname -a"),
             )
         }
     };
@@ -1949,7 +1950,7 @@ fn cmd_fix(args: Vec<String>) -> i32 {
         }
         _ => fail(
             code::USAGE,
-            "目前有: fy fix time <设备>（把主机时间打进板子）",
+            "目前有: nxt fix time <设备>（把主机时间打进板子）",
         ),
     }
 }
@@ -2062,7 +2063,7 @@ fn cmd_watch(args: Vec<String>) -> i32 {
                 ]);
             }
             if !s.running {
-                info("隧道保活没在跑。开启: fy watch start");
+                info("隧道保活没在跑。开启: nxt watch start");
                 return 0;
             }
             println!(
@@ -2075,7 +2076,7 @@ fn cmd_watch(args: Vec<String>) -> i32 {
             if s.devices.is_empty() {
                 println!(
                     "{}",
-                    dim("还没盯上任何设备（建个转发或 fy share 就会自动纳管）")
+                    dim("还没盯上任何设备（建个转发或 nxt share 就会自动纳管）")
                 );
             } else {
                 let rows: Vec<Vec<String>> = s
@@ -2099,7 +2100,7 @@ fn cmd_watch(args: Vec<String>) -> i32 {
         }
         Some(other) => fail(
             code::USAGE,
-            &format!("fy watch 只有 start/stop/status，没有 '{}'", other),
+            &format!("nxt watch 只有 start/stop/status，没有 '{}'", other),
         ),
     }
 }
@@ -2164,7 +2165,7 @@ fn cmd_proxy(args: Vec<String>) -> i32 {
                     up.describe()
                 );
             } else {
-                info("代理没在跑。`fy share <设备>` 会自动拉起，或 `fy proxy start`");
+                info("代理没在跑。`nxt share <设备>` 会自动拉起，或 `nxt proxy start`");
             }
             if !sharing.is_empty() {
                 println!(
@@ -2181,7 +2182,7 @@ fn cmd_proxy(args: Vec<String>) -> i32 {
         }
         other => fail(
             code::USAGE,
-            &format!("fy proxy 只有 start/stop/status，没有 '{}'", other),
+            &format!("nxt proxy 只有 start/stop/status，没有 '{}'", other),
         ),
     }
 }
@@ -2196,7 +2197,7 @@ fn cmd_help(args: Vec<String>) -> i32 {
     0
 }
 
-/// `fy help --json`：把命令、参数、退出码一次性交给 agent，
+/// `nxt help --json`：把命令、参数、退出码一次性交给 agent，
 /// 省得它去猜或者去 grep --help 的中文排版。
 fn emit_catalog() -> i32 {
     let cmd = |name: &str, usage: &str, about: &str, json: bool| {
@@ -2208,39 +2209,39 @@ fn emit_catalog() -> i32 {
         ])
     };
     let cmds = vec![
-        cmd("ls", "fy ls", "设备总览：并行探活 + 指纹身份", true),
-        cmd("add", "fy add <名字> [--ssh user@host[:port]] [--adb [serial]] [--serial /dev/x --baud N] [--password P] [--legacy]", "新建/更新设备档案", true),
-        cmd("rm", "fy rm <设备>", "删除设备档案", true),
-        cmd("sh", "fy sh <设备> [-- <命令>]", "进 shell；带 -- 则执行一条命令并回传 stdout/stderr/退出码", true),
-        cmd("push", "fy push <设备> <本地> [远端] | fy push --all <本地> [远端] [--only 前缀]", "上传：断点续传 + sha256 校验 + 进度；--all 并行分发到所有在线设备", true),
-        cmd("pull", "fy pull <设备> <远端> [本地]", "下载：断点续传 + 校验", true),
-        cmd("cp", "fy cp <源> <目标>", "统一传输入口，路径写 设备名:/路径；板↔板直传经主机中转不落盘", true),
-        cmd("serve", "fy serve [路径...] [--port N] [--for 设备] [--upload [目录]] [--no-token] [--once]", "局域网快传：起 HTTP 服务给板子 wget，支持 Range 与反向上传（常驻，不支持 --json）", false),
-        cmd("run", "fy run <设备> <可执行文件> [参数...]", "push + chmod + 运行 + 回传退出码", false),
-        cmd("debug", "fy debug <设备> <可执行文件> [--port 3333]", "gdbserver + 端口转发一条龙", false),
-        cmd("fwd", "fy fwd <设备> <规则> | fy fwd ls | fy fwd rm <ID|all>", "端口转发：8080 · 8080:80 · R:9000:8000 · D:1080", true),
-        cmd("share", "fy share <设备> [--nat] [--persist] [--upstream URL] [--off]", "借网给板子：HTTP+SOCKS5 代理 + 反向隧道，可链到主机的上游代理", true),
-        cmd("proxy", "fy proxy start|stop|status [--port N] [--upstream URL]", "内置代理守护进程的直接管理", true),
-        cmd("watch", "fy watch start|stop|status [--interval N]", "隧道保活：断线自动重连并重放所有转发/借网", true),
-        cmd("net", "fy net <设备> [-c N] [--no-speed]", "网络体检：延迟/抖动/丢包、MTU、路由、DNS、出网、上下行实测带宽", true),
-        cmd("scan", "fy scan [--subnet CIDR] [--ports 2222,2200] [--add] [--no-mdns]", "发现设备：mDNS + 网段扫描 + 指纹认领", true),
-        cmd("info", "fy info <设备>", "身份卡片：内核/架构/MAC/machine-id", true),
-        cmd("hw", "fy hw <设备> [--out 目录] [--no-bundle] [--no-brief] [--include-identifiers] [--max-dt-nodes N] | fy hw brief <hardware.json> [--out peripherals.md]", "一次性采集硬件清单，或离线从 JSON 生成可读的 peripherals.md", true),
-        cmd("plugin", "fy plugin ls|show|install|run", "本地可审阅功能插件：安装、预检、运行；内置 sysroot-sync 可同步交叉编译 sysroot", true),
-        cmd("up", "fy up <设备> [--boot]", "通道爬升：串口登录→配网→ssh+免密", false),
-        cmd("usb", "fy usb net|gadget|install", "USB 一键配网", false),
-        cmd("sync", "fy sync <设备> <本地目录> <远端目录> [--exec 命令] [--once]", "保存即上板", false),
-        cmd("log", "fy log <设备> [--save 文件]", "跟日志：journalctl/syslog/dmesg/logcat 自动选", false),
-        cmd("top", "fy top", "多板实时仪表盘", false),
-        cmd("all", "fy all [设备前缀...] -- <命令>", "多板并行执行同一条命令", true),
-        cmd("bb", "fy bb start|stop|status [设备]", "串口黑匣子", true),
-        cmd("blame", "fy blame <设备> [-n 行数]", "最近一次崩溃现场", true),
-        cmd("keyup", "fy keyup <设备>", "装公钥转免密", true),
-        cmd("forget", "fy forget <设备>", "清 host key（板子重刷后用）", true),
-        cmd("wifi", "fy wifi <设备>", "adb 从 USB 切到 WiFi", true),
-        cmd("doctor", "fy doctor [设备]", "主机自检 / 板子体检", true),
-        cmd("fix", "fy fix time <设备>", "把主机时间打进板子", true),
-        cmd("ui", "fy ui [--port 7900]", "浏览器图形工作台（常驻）", false),
+        cmd("ls", "nxt ls", "设备总览：并行探活 + 指纹身份", true),
+        cmd("add", "nxt add <名字> [--ssh user@host[:port]] [--adb [serial]] [--serial /dev/x --baud N] [--password P] [--legacy]", "新建/更新设备档案", true),
+        cmd("rm", "nxt rm <设备>", "删除设备档案", true),
+        cmd("sh", "nxt sh <设备> [-- <命令>]", "进 shell；带 -- 则执行一条命令并回传 stdout/stderr/退出码", true),
+        cmd("push", "nxt push <设备> <本地> [远端] | nxt push --all <本地> [远端] [--only 前缀]", "上传：断点续传 + sha256 校验 + 进度；--all 并行分发到所有在线设备", true),
+        cmd("pull", "nxt pull <设备> <远端> [本地]", "下载：断点续传 + 校验", true),
+        cmd("cp", "nxt cp <源> <目标>", "统一传输入口，路径写 设备名:/路径；板↔板直传经主机中转不落盘", true),
+        cmd("serve", "nxt serve [路径...] [--port N] [--for 设备] [--upload [目录]] [--no-token] [--once]", "局域网快传：起 HTTP 服务给板子 wget，支持 Range 与反向上传（常驻，不支持 --json）", false),
+        cmd("run", "nxt run <设备> <可执行文件> [参数...]", "push + chmod + 运行 + 回传退出码", false),
+        cmd("debug", "nxt debug <设备> <可执行文件> [--port 3333]", "gdbserver + 端口转发一条龙", false),
+        cmd("fwd", "nxt fwd <设备> <规则> | nxt fwd ls | nxt fwd rm <ID|all>", "端口转发：8080 · 8080:80 · R:9000:8000 · D:1080", true),
+        cmd("share", "nxt share <设备> [--nat] [--persist] [--upstream URL] [--off]", "借网给板子：HTTP+SOCKS5 代理 + 反向隧道，可链到主机的上游代理", true),
+        cmd("proxy", "nxt proxy start|stop|status [--port N] [--upstream URL]", "内置代理守护进程的直接管理", true),
+        cmd("watch", "nxt watch start|stop|status [--interval N]", "隧道保活：断线自动重连并重放所有转发/借网", true),
+        cmd("net", "nxt net <设备> [-c N] [--no-speed]", "网络体检：延迟/抖动/丢包、MTU、路由、DNS、出网、上下行实测带宽", true),
+        cmd("scan", "nxt scan [--subnet CIDR] [--ports 2222,2200] [--add] [--no-mdns]", "发现设备：mDNS + 网段扫描 + 指纹认领", true),
+        cmd("info", "nxt info <设备>", "身份卡片：内核/架构/MAC/machine-id", true),
+        cmd("hw", "nxt hw <设备> [--out 目录] [--no-bundle] [--no-brief] [--include-identifiers] [--max-dt-nodes N] | nxt hw brief <hardware.json> [--out peripherals.md]", "一次性采集硬件清单，或离线从 JSON 生成可读的 peripherals.md", true),
+        cmd("plugin", "nxt plugin ls|show|install|run", "本地可审阅功能插件：安装、预检、运行；内置 sysroot-sync 可同步交叉编译 sysroot", true),
+        cmd("up", "nxt up <设备> [--boot]", "通道爬升：串口登录→配网→ssh+免密", false),
+        cmd("usb", "nxt usb net|gadget|install", "USB 一键配网", false),
+        cmd("sync", "nxt sync <设备> <本地目录> <远端目录> [--exec 命令] [--once]", "保存即上板", false),
+        cmd("log", "nxt log <设备> [--save 文件]", "跟日志：journalctl/syslog/dmesg/logcat 自动选", false),
+        cmd("top", "nxt top", "多板实时仪表盘", false),
+        cmd("all", "nxt all [设备前缀...] -- <命令>", "多板并行执行同一条命令", true),
+        cmd("bb", "nxt bb start|stop|status [设备]", "串口黑匣子", true),
+        cmd("blame", "nxt blame <设备> [-n 行数]", "最近一次崩溃现场", true),
+        cmd("keyup", "nxt keyup <设备>", "装公钥转免密", true),
+        cmd("forget", "nxt forget <设备>", "清 host key（板子重刷后用）", true),
+        cmd("wifi", "nxt wifi <设备>", "adb 从 USB 切到 WiFi", true),
+        cmd("doctor", "nxt doctor [设备]", "主机自检 / 板子体检", true),
+        cmd("fix", "nxt fix time <设备>", "把主机时间打进板子", true),
+        cmd("ui", "nxt ui [--port 7900]", "浏览器图形工作台（常驻）", false),
     ];
     let codes: Vec<J> = [
         (code::OK, "一切正常"),
@@ -2273,9 +2274,9 @@ fn emit_catalog() -> i32 {
             "contract",
             J::obj(vec![
                 ("stdout", J::s("--json 时 stdout 只有一份 JSON 文档，过程信息全在 stderr")),
-                ("ok_field", J::s("ok=true/false 是唯一权威判据；fy sh/run 会透传远端退出码，可能与 ferry 码重叠")),
+                ("ok_field", J::s("ok=true/false 是唯一权威判据；nxt sh/run 会透传远端退出码，可能与 neoxterm 码重叠")),
                 ("non_interactive", J::s("--json 隐含非交互：不弹选择器、不问 y/n；需要人拍板时以 code 19 失败并给 hint")),
-                ("env", J::s("FERRY_JSON=1 等价于处处加 --json；FERRY_HOME 换配置目录")),
+                ("env", J::s("NEOXTERM_JSON=1 等价于处处加 --json；NEOXTERM_HOME 换配置目录")),
                 ("dry_run", J::s("-n/--dry-run 只打印将执行的命令，不产生副作用")),
             ]),
         ),
@@ -2302,71 +2303,71 @@ fn print_help() {
         r#"{title} v{v} — ssh / adb / 串口，一套命令全通
 
 {s1}
-  fy                         设备总览（并行探活 + 指纹身份）
-  fy add <名> --ssh root@ip[:port] [--password P] [--legacy] [--serial /dev/x]
-  fy add <名> --adb [serial] | --serial /dev/x --baud 1500000
-  fy scan [--subnet CIDR] [--ports 2222,2200] [--add] [--no-mdns]   mDNS + 并发扫段 + 老朋友换IP自动认领
-  fy sh [设备] [-- 命令]     进 shell / 跑一条命令（串口自动经黑匣子共享）
-  fy info <设备>             身份卡片: 内核/架构/MAC/machine-id/实时状态
-  fy hw <设备> [--out 目录]  一次性硬件快照: JSON/设备树 + 外设简报 peripherals.md
-  fy hw brief <hardware.json> [--out peripherals.md]  离线从既有 JSON 重建外设简报
-  fy plugin ls/install/run    本地功能扩展；内置 sysroot-sync 可拉取目标机库和头文件
+  nxt                         设备总览（并行探活 + 指纹身份）
+  nxt add <名> --ssh root@ip[:port] [--password P] [--legacy] [--serial /dev/x]
+  nxt add <名> --adb [serial] | --serial /dev/x --baud 1500000
+  nxt scan [--subnet CIDR] [--ports 2222,2200] [--add] [--no-mdns]   mDNS + 并发扫段 + 老朋友换IP自动认领
+  nxt sh [设备] [-- 命令]     进 shell / 跑一条命令（串口自动经黑匣子共享）
+  nxt info <设备>             身份卡片: 内核/架构/MAC/machine-id/实时状态
+  nxt hw <设备> [--out 目录]  一次性硬件快照: JSON/设备树 + 外设简报 peripherals.md
+  nxt hw brief <hardware.json> [--out peripherals.md]  离线从既有 JSON 重建外设简报
+  nxt plugin ls/install/run    本地功能扩展；内置 sysroot-sync 可拉取目标机库和头文件
 
 {s2}
-  fy push <设备> <本地> [远端]      上传: 断点续传 + sha256 校验 + 进度条
-  fy push --all <本地> [远端]       并行分发到所有在线板子 [--only 前缀]
-  fy pull <设备> <远端> [本地]      下载: 同样续传 + 校验
-  fy cp <源> <目标>                 路径写 设备:/路径; 板↔板直传经主机不落盘
-  fy serve [路径...] [--for 设备]   局域网快传: 板上一条 wget 就拉走
+  nxt push <设备> <本地> [远端]      上传: 断点续传 + sha256 校验 + 进度条
+  nxt push --all <本地> [远端]       并行分发到所有在线板子 [--only 前缀]
+  nxt pull <设备> <远端> [本地]      下载: 同样续传 + 校验
+  nxt cp <源> <目标>                 路径写 设备:/路径; 板↔板直传经主机不落盘
+  nxt serve [路径...] [--for 设备]   局域网快传: 板上一条 wget 就拉走
                                     [--upload 目录] 反向收文件 [--port N] [--once]
   传输旗标: --force 强制重传 · --no-resume 关续传 · --no-verify 关校验
             --scp 退回老的 scp/tar 级联（无续传无校验，仅作逃生口）
 
 {s3}
-  fy up <设备> [--boot]      通道爬升: 串口自动登录→探测→USB配网/DHCP→ssh+免密
-  fy usb net [--share] [--as 名]   插线一键: 识别新网口→配IP→探板→(NAT借网)
-  fy usb gadget --out f.sh [--mode ncm|rndis]  生成板端 gadget 脚本
-  fy usb install <设备> [--autostart]          推脚本上板+注册开机自启
-  fy keyup <设备>            免密（自动生成密钥, 兼容 dropbear 路径）
-  fy forget <设备>           板子重刷后清 host key
-  fy wifi <设备>             adb 一键切 WiFi（拔线自由）
+  nxt up <设备> [--boot]      通道爬升: 串口自动登录→探测→USB配网/DHCP→ssh+免密
+  nxt usb net [--share] [--as 名]   插线一键: 识别新网口→配IP→探板→(NAT借网)
+  nxt usb gadget --out f.sh [--mode ncm|rndis]  生成板端 gadget 脚本
+  nxt usb install <设备> [--autostart]          推脚本上板+注册开机自启
+  nxt keyup <设备>            免密（自动生成密钥, 兼容 dropbear 路径）
+  nxt forget <设备>           板子重刷后清 host key
+  nxt wifi <设备>             adb 一键切 WiFi（拔线自由）
 
 {s4}
-  fy fwd <设备> 8080         转发管理: 8080 · 8080:80 · R:9000:8000 · D:1080
-  fy fwd ls / rm <ID|all>    活隧道挂在 ssh 连接复用上, 断线可见
-  fy watch start/stop/status 隧道保活: 断线自动重连并重放所有转发与借网
-  fy share <设备>            借网给板子: HTTP+SOCKS5 同端口代理 + 反向隧道, 零 sudo
-  fy share <设备> --upstream http://127.0.0.1:7897   把主机的梯子一起借给板子
-  fy share <设备> --nat      直连板真 NAT(全协议); --off 关闭; --persist 写进板子
-  fy proxy start/stop/status 直接管代理守护进程 [--port N] [--upstream URL|auto]
-  fy net <设备> [-c N]       网络体检: 延迟/抖动/丢包 · MTU · 路由 · DNS · 出网 · 实测带宽
+  nxt fwd <设备> 8080         转发管理: 8080 · 8080:80 · R:9000:8000 · D:1080
+  nxt fwd ls / rm <ID|all>    活隧道挂在 ssh 连接复用上, 断线可见
+  nxt watch start/stop/status 隧道保活: 断线自动重连并重放所有转发与借网
+  nxt share <设备>            借网给板子: HTTP+SOCKS5 同端口代理 + 反向隧道, 零 sudo
+  nxt share <设备> --upstream http://127.0.0.1:7897   把主机的梯子一起借给板子
+  nxt share <设备> --nat      直连板真 NAT(全协议); --off 关闭; --persist 写进板子
+  nxt proxy start/stop/status 直接管代理守护进程 [--port N] [--upstream URL|auto]
+  nxt net <设备> [-c N]       网络体检: 延迟/抖动/丢包 · MTU · 路由 · DNS · 出网 · 实测带宽
 
 {s5}
-  fy run <设备> ./a.out [参数]     push+chmod+运行+回传退出码, 像本地一样
-  fy debug <设备> ./a.out [--port] gdbserver+转发一条龙, 给出 gdb 连接命令
-  fy sync <设备> <本地> <远端> [--exec '命令'] 保存即上板(rsync/tar/adb 自动选)
-  fy plugin install sysroot-sync
-  fy plugin run sysroot-sync rk -- --dest /opt/sysroot
-  fy log <设备> [--save f]   journalctl/syslog/dmesg/logcat 自动选
-  fy top                     多板实时仪表盘 (CPU/内存/温度/rootfs)
-  fy all [前缀] -- <命令>    多板并行执行, 彩色前缀区分
+  nxt run <设备> ./a.out [参数]     push+chmod+运行+回传退出码, 像本地一样
+  nxt debug <设备> ./a.out [--port] gdbserver+转发一条龙, 给出 gdb 连接命令
+  nxt sync <设备> <本地> <远端> [--exec '命令'] 保存即上板(rsync/tar/adb 自动选)
+  nxt plugin install sysroot-sync
+  nxt plugin run sysroot-sync rk -- --dest /opt/sysroot
+  nxt log <设备> [--save f]   journalctl/syslog/dmesg/logcat 自动选
+  nxt top                     多板实时仪表盘 (CPU/内存/温度/rootfs)
+  nxt all [前缀] -- <命令>    多板并行执行, 彩色前缀区分
 
 {s6}
-  fy ui [--port 7900]        图形工作台: 系统终端(主) + 便捷工具侧栏(浏览器打开)
-  fy bb start/stop/status [设备]   黑匣子: 后台录串口+panic侦测+桌面通知
-  fy blame <设备>            最近一次崩溃现场（重启也不丢）
-  fy doctor [设备]           主机自检 / 板子体检(时间/只读盘/空间/DNS/OOM)
-  fy fix time <设备>         一键对时, 告别 1970 年
+  nxt ui [--port 7900]        图形工作台: 系统终端(主) + 便捷工具侧栏(浏览器打开)
+  nxt bb start/stop/status [设备]   黑匣子: 后台录串口+panic侦测+桌面通知
+  nxt blame <设备>            最近一次崩溃现场（重启也不丢）
+  nxt doctor [设备]           主机自检 / 板子体检(时间/只读盘/空间/DNS/OOM)
+  nxt fix time <设备>         一键对时, 告别 1970 年
 
 {s7}
   --json         机器可读输出（stdout 只有一份 JSON，过程信息走 stderr，且全程不交互）
-  fy help --json 命令清单 + 参数 + 退出码表，agent 一次读全
+  nxt help --json 命令清单 + 参数 + 退出码表，agent 一次读全
   -n --dry-run   只看不做（打印将执行的每条命令）
   -y --yes       非交互（不弹选择器、不问 y/n）
-  --plain 关颜色    -q 安静    -V 版本    FERRY_JSON=1 等价于处处 --json
-  档案: ~/.config/ferry/devices.toml   指纹: facts/   密码档案建议尽快 keyup 转免密
+  --plain 关颜色    -q 安静    -V 版本    NEOXTERM_JSON=1 等价于处处 --json
+  档案: ~/.config/neoxterm/devices.toml   指纹: facts/   密码档案建议尽快 keyup 转免密
 "#,
-        title = bold("ferry (fy)"),
+        title = bold("NeoXTerm (nxt)"),
         v = VERSION,
         s1 = cyan("── 设备与交互 ──────────────────────────────"),
         s2 = cyan("── 文件传输 ────────────────────────────────"),

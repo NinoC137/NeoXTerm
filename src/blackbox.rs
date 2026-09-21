@@ -1,5 +1,5 @@
 //! 黑匣子：后台守护进程常驻串口，持续录制 + panic 侦测 + 桌面通知。
-//! 板子半夜崩了、重启了，现场都在。`fy sh` 会自动 attach 共享串口，
+//! 板子半夜崩了、重启了，现场都在。`nxt sh` 会自动 attach 共享串口，
 //! 记录与交互两不误（串口独占问题从此消失）。
 
 use crate::config::{Config, State, Transport};
@@ -47,7 +47,7 @@ pub fn start(cfg: &Config, name: &str) -> Result<(), String> {
     let port = d
         .dev
         .clone()
-        .ok_or("该设备档案没有串口 (dev 字段)。fy add 时用 --serial 指定")?;
+        .ok_or("该设备档案没有串口 (dev 字段)。nxt add 时用 --serial 指定")?;
     let mut st = State::load();
     let pid = st.get_int(&format!("bb.{}", name), "pid") as i32;
     if pid > 0 && pid_alive(pid) {
@@ -75,7 +75,7 @@ pub fn start(cfg: &Config, name: &str) -> Result<(), String> {
         log_path(name).display(),
         incidents_dir(name).display()
     ));
-    info("此后 fy sh 会自动经黑匣子共享串口，随开随关不打架。");
+    info("此后 nxt sh 会自动经黑匣子共享串口，随开随关不打架。");
     Ok(())
 }
 
@@ -118,7 +118,7 @@ pub fn status(cfg: &Config) {
         ]);
     }
     if rows.is_empty() {
-        info("没有运行中的黑匣子。fy bb start <串口设备> 开一个。");
+        info("没有运行中的黑匣子。nxt bb start <串口设备> 开一个。");
         let serials: Vec<String> = cfg
             .devices
             .values()
@@ -133,7 +133,7 @@ pub fn status(cfg: &Config) {
     print_table(&["设备", "状态", "录制大小", "事故"], &rows);
 }
 
-/// 黑匣子在跑吗？（fy sh 靠它决定直连还是 attach）
+/// 黑匣子在跑吗？（nxt sh 靠它决定直连还是 attach）
 pub fn running_for(name: &str) -> bool {
     let st = State::load();
     let pid = st.get_int(&format!("bb.{}", name), "pid") as i32;
@@ -148,7 +148,7 @@ pub fn attach(name: &str) -> std::io::Result<()> {
     serialx::pump_console(r, s, None)
 }
 
-/// `fy blame <dev>`：最近一次事故现场（没有事故就给录制尾巴）。
+/// `nxt blame <dev>`：最近一次事故现场（没有事故就给录制尾巴）。
 pub fn blame(name: &str, lines: usize) {
     let dir = incidents_dir(name);
     let mut incidents: Vec<PathBuf> = std::fs::read_dir(&dir)
@@ -166,7 +166,7 @@ pub fn blame(name: &str, lines: usize) {
     }
     let log = slurp(&log_path(name));
     if log.is_empty() {
-        warn("黑匣子还没有录到任何东西（fy bb start 开启后台录制）");
+        warn("黑匣子还没有录到任何东西（nxt bb start 开启后台录制）");
         return;
     }
     println!(
@@ -179,14 +179,14 @@ pub fn blame(name: &str, lines: usize) {
     }
 }
 
-// ---------------- 守护进程本体 (fy __bbd) ----------------
+// ---------------- 守护进程本体 (nxt __bbd) ----------------
 
 pub fn daemon_main(name: &str, port: &str, baud: u32) -> ! {
     eprintln!("[bbd] start dev={} port={} baud={}", name, port, baud);
     let client: Arc<Mutex<Option<UnixStream>>> = Arc::new(Mutex::new(None));
     let stop_flag = Arc::new(AtomicBool::new(false));
 
-    // unix socket 接待 fy sh attach
+    // unix socket 接待 nxt sh attach
     let spath = sock_path(name);
     let _ = std::fs::remove_file(&spath);
     let _ = ensure_dir(&bb_dir());
@@ -354,7 +354,7 @@ fn save_incident(name: &str, pattern: &str, ring: &std::collections::VecDeque<St
     let path = incidents_dir(name).join(format!("{}.log", ts));
     let _ = ensure_dir(&incidents_dir(name));
     let mut content = format!(
-        "# ferry blackbox incident\n# 设备: {}\n# 命中: {}\n# 时间: {}\n\n",
+        "# nxt blackbox incident\n# 设备: {}\n# 命中: {}\n# 时间: {}\n\n",
         name, pattern, ts
     );
     for l in ring {
@@ -364,8 +364,8 @@ fn save_incident(name: &str, pattern: &str, ring: &std::collections::VecDeque<St
     let _ = std::fs::write(&path, content);
     eprintln!("[bbd] INCIDENT {} -> {}", pattern, path.display());
     notify(
-        &format!("ferry 黑匣子: {} 出事了", name),
-        &format!("{} — 现场已保存，fy blame {} 查看", pattern, name),
+        &format!("NeoXTerm 黑匣子: {} 出事了", name),
+        &format!("{} — 现场已保存，nxt blame {} 查看", pattern, name),
     );
 }
 

@@ -46,7 +46,7 @@ impl Default for XferOpts {
     }
 }
 
-/// 单个文件的传输结果。`fy push --json` 里 `files[]` 的元素就是它。
+/// 单个文件的传输结果。`nxt push --json` 里 `files[]` 的元素就是它。
 #[derive(Debug, Clone, Default)]
 pub struct FileResult {
     pub name: String,
@@ -90,7 +90,7 @@ fn rexec(d: &Device, cmd: &str) -> std::io::Result<Output> {
         Transport::Adb => adbx::exec_capture(d, cmd),
         Transport::Serial => Err(std::io::Error::new(
             std::io::ErrorKind::Unsupported,
-            "串口通道不支持文件传输，先 `fy up <设备>` 爬升到 ssh",
+            "串口通道不支持文件传输，先 `nxt up <设备>` 爬升到 ssh",
         )),
     }
 }
@@ -177,7 +177,7 @@ pub fn push(
     o: &XferOpts,
 ) -> Result<Vec<FileResult>, String> {
     if d.transport == Transport::Serial {
-        return Err("串口通道传不了文件，先 `fy up <设备>` 爬升到 ssh".into());
+        return Err("串口通道传不了文件，先 `nxt up <设备>` 爬升到 ssh".into());
     }
     if !local.exists() {
         return Err(format!("本地路径不存在: {}", local.display()));
@@ -315,7 +315,7 @@ fn push_one(
             Some(rh) if rh == lh => r.verified = true,
             Some(rh) => {
                 return Err(format!(
-                    "校验不一致！本地 {}… 远端 {}…（文件可能损坏，重传一次: fy push --force）",
+                    "校验不一致！本地 {}… 远端 {}…（文件可能损坏，重传一次: nxt push --force）",
                     &lh[..12.min(lh.len())],
                     &rh[..12.min(rh.len())]
                 ))
@@ -520,8 +520,8 @@ fn push_dir(
         .map(|s| s.to_string_lossy().to_string())
         .unwrap_or_default();
     // rsync 语义，看的是**本地**路径的尾巴：
-    //   fy push rk ./app  /opt/   → /opt/app/...   （建同名子目录）
-    //   fy push rk ./app/ /opt/   → /opt/...       （内容直接铺进去）
+    //   nxt push rk ./app  /opt/   → /opt/app/...   （建同名子目录）
+    //   nxt push rk ./app/ /opt/   → /opt/...       （内容直接铺进去）
     let spill = local.to_string_lossy().ends_with('/');
     let root = if spill {
         remote.trim_end_matches('/').to_string()
@@ -576,7 +576,7 @@ pub fn pull(
     o: &XferOpts,
 ) -> Result<Vec<FileResult>, String> {
     if d.transport == Transport::Serial {
-        return Err("串口通道传不了文件，先 `fy up <设备>` 爬升到 ssh".into());
+        return Err("串口通道传不了文件，先 `nxt up <设备>` 爬升到 ssh".into());
     }
     if dry() {
         info(&format!(
@@ -1043,7 +1043,7 @@ mod tests {
 
     #[test]
     fn walk_skips_symlinks_and_keeps_relpaths() {
-        let root = std::env::temp_dir().join(format!("ferry_walk_{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("neoxterm_walk_{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&root);
         std::fs::create_dir_all(root.join("sub")).unwrap();
         std::fs::write(root.join("a.txt"), b"a").unwrap();

@@ -1,6 +1,6 @@
 //! 串口：零依赖实现。端口参数用 stty 配置，读写用普通文件句柄，
 //! 本地终端 raw 模式也走 stty（-g 保存/恢复）。
-//! 提供交互 console、expect 引擎（fy up 自动登录用）、黑匣子 attach。
+//! 提供交互 console、expect 引擎（nxt up 自动登录用）、黑匣子 attach。
 
 use crate::util::*;
 use std::fs::{File, OpenOptions};
@@ -208,7 +208,7 @@ pub fn console(dev: &str, baud: u32, log: Option<&Path>) -> std::io::Result<()> 
 
 // ---------------- expect 引擎 ----------------
 
-/// 对任意 Read 端做"等待模式串"的小引擎，fy up 的串口自动登录靠它。
+/// 对任意 Read 端做"等待模式串"的小引擎，nxt up 的串口自动登录靠它。
 pub struct Expecter {
     rx: mpsc::Receiver<Vec<u8>>,
     pub transcript: String, // 全程记录（供诊断/黑匣子/从标记处匹配）

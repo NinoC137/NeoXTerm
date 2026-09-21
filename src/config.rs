@@ -196,7 +196,7 @@ impl Config {
             if !d.notes.is_empty() {
                 self.doc.set(&t, "notes", Val::S(d.notes.clone()));
             }
-            // 串口/adb 设备也需要保存 user/password：fy up 串口自动登录要用；
+            // 串口/adb 设备也需要保存 user/password：nxt up 串口自动登录要用；
             // 且 up 爬升后可能补全 host/port 作为 ssh 候选。
             if d.transport != Transport::Ssh {
                 if d.user != "root" {

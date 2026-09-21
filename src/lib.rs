@@ -1,4 +1,4 @@
-//! Reusable Ferry modules for the desktop workbench and integration tests.
+//! Reusable NeoXTerm modules for the desktop workbench and integration tests.
 //!
 //! The CLI keeps its own small binary entry point; this library exposes the
 //! same device, PTY, serial, and WebSocket primitives without duplicating them.

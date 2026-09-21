@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ferry · 上位机↔下位机工作台</title>
+<title>NeoXTerm · 上位机↔下位机工作台</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/xterm/5.3.0/xterm.min.css">
 <style>
   :root{
@@ -125,7 +125,7 @@
 <body>
   <aside id="side">
     <div id="brand">
-      <span class="logo"><b>ferry</b> 工作台</span>
+      <span class="logo"><b>NeoXTerm</b> 工作台</span>
       <span class="ver" id="ver"></span>
       <span class="sub">上位机↔下位机</span>
     </div>
@@ -133,11 +133,11 @@
       <div class="sec">
         <h3>快捷动作</h3>
         <div class="quick">
-          <div class="qbtn" onclick="run('fy scan')"><span class="i">🔍</span>扫描发现</div>
-          <div class="qbtn" onclick="run('fy')"><span class="i">📋</span>设备总览</div>
-          <div class="qbtn" onclick="run('fy top')"><span class="i">📊</span>多板仪表盘</div>
-          <div class="qbtn" onclick="run('fy doctor')"><span class="i">🩺</span>主机体检</div>
-          <div class="qbtn wide" onclick="run('fy usb net')"><span class="i">🔌</span>USB 一键配网</div>
+          <div class="qbtn" onclick="run('nxt scan')"><span class="i">🔍</span>扫描发现</div>
+          <div class="qbtn" onclick="run('nxt')"><span class="i">📋</span>设备总览</div>
+          <div class="qbtn" onclick="run('nxt top')"><span class="i">📊</span>多板仪表盘</div>
+          <div class="qbtn" onclick="run('nxt doctor')"><span class="i">🩺</span>主机体检</div>
+          <div class="qbtn wide" onclick="run('nxt usb net')"><span class="i">🔌</span>USB 一键配网</div>
         </div>
       </div>
 
@@ -169,7 +169,7 @@
       <div class="sec">
         <h3>命令面板</h3>
         <div class="miniform">
-          <input id="cmd" placeholder="fy … 回车执行" onkeydown="if(event.key==='Enter')runCmd()">
+          <input id="cmd" placeholder="nxt … 回车执行" onkeydown="if(event.key==='Enter')runCmd()">
           <button onclick="runCmd()">▶</button>
         </div>
       </div>
@@ -263,7 +263,7 @@ function addFwd(){
   const d=document.getElementById('fwdDev').value.trim();
   const s=document.getElementById('fwdSpec').value.trim();
   if(!d||!s){ toast('填设备名和转发规则'); return; }
-  run(`fy fwd ${d} ${s}`);
+  run(`nxt fwd ${d} ${s}`);
   document.getElementById('fwdSpec').value='';
 }
 function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),1800); }
@@ -284,23 +284,23 @@ async function poll(){
 function renderDevices(devs){
   document.getElementById('devcnt').textContent=devs.length?`(${devs.length})`:'';
   const box=document.getElementById('devs');
-  if(!devs.length){ box.innerHTML='<div class="empty">还没有设备 · 点上方「扫描发现」或在终端 <b>fy add</b></div>'; return; }
+  if(!devs.length){ box.innerHTML='<div class="empty">还没有设备 · 点上方「扫描发现」或在终端 <b>nxt add</b></div>'; return; }
   box.innerHTML=devs.map(d=>{
     const meta=[d.kernel,d.arch].filter(Boolean).join(' · ')|| (d.mac||'');
     const acts = d.transport==='serial'
-      ? `<button class="abtn up" onclick="run('fy up ${esc(d.name)}')">↑爬升</button>
-         <button class="abtn" onclick="run('fy sh ${esc(d.name)}')">终端</button>
-         <button class="abtn bb" onclick="run('fy bb start ${esc(d.name)}')">黑匣子</button>
-         <button class="abtn" onclick="run('fy info ${esc(d.name)}')">信息</button>`
-      : `<button class="abtn" onclick="run('fy sh ${esc(d.name)}')">终端</button>
-         <button class="abtn" onclick="run('fy log ${esc(d.name)}')">日志</button>
-         <button class="abtn share" onclick="run('fy share ${esc(d.name)}')">借网</button>
-         <button class="abtn up" onclick="run('fy up ${esc(d.name)}')">爬升</button>
-         <button class="abtn" onclick="run('fy info ${esc(d.name)}')">信息</button>`;
+      ? `<button class="abtn up" onclick="run('nxt up ${esc(d.name)}')">↑爬升</button>
+         <button class="abtn" onclick="run('nxt sh ${esc(d.name)}')">终端</button>
+         <button class="abtn bb" onclick="run('nxt bb start ${esc(d.name)}')">黑匣子</button>
+         <button class="abtn" onclick="run('nxt info ${esc(d.name)}')">信息</button>`
+      : `<button class="abtn" onclick="run('nxt sh ${esc(d.name)}')">终端</button>
+         <button class="abtn" onclick="run('nxt log ${esc(d.name)}')">日志</button>
+         <button class="abtn share" onclick="run('nxt share ${esc(d.name)}')">借网</button>
+         <button class="abtn up" onclick="run('nxt up ${esc(d.name)}')">爬升</button>
+         <button class="abtn" onclick="run('nxt info ${esc(d.name)}')">信息</button>`;
     return `<div class="dev">
       <div class="row1">
         <span class="dot ${d.online?'on':'off'}"></span>
-        <span class="name" onclick="run('fy sh ${esc(d.name)}')" title="点击进入终端">${esc(d.name)}</span>
+        <span class="name" onclick="run('nxt sh ${esc(d.name)}')" title="点击进入终端">${esc(d.name)}</span>
         <span class="badge ${esc(d.transport)}">${esc(d.transport)}</span>
         <span class="why">${esc(d.why)}</span>
       </div>
@@ -315,21 +315,21 @@ function renderState(s){
   document.getElementById('fwdcnt').textContent=f.length?`(${f.length})`:'';
   document.getElementById('fwds').innerHTML = f.length ? f.map(x=>
     `<div class="strip"><span class="k">[${esc(x.id)}]</span> ${esc(x.spec)} <span class="k">· ${esc(x.dev)}</span>
-     <span class="x" title="移除" onclick="run('fy fwd rm ${esc(x.id)}')">✕</span></div>`).join('') : '';
+     <span class="x" title="移除" onclick="run('nxt fwd rm ${esc(x.id)}')">✕</span></div>`).join('') : '';
   // 黑匣子
   const b=s.blackboxes||[];
   document.getElementById('bbcnt').textContent=b.length?`(${b.length})`:'';
   document.getElementById('bbs').innerHTML = b.length ? b.map(x=>
     `<div class="strip"><span class="dot ${x.alive?'on':'off'}"></span>${esc(x.dev)}
      <span class="k">${x.incidents}起事故</span>
-     <span class="x" title="看现场" onclick="run('fy blame ${esc(x.dev)}')" style="color:var(--yellow)">看</span>
-     <span class="x" title="停止" onclick="run('fy bb stop ${esc(x.dev)}')">✕</span></div>`).join('') : '<div class="empty">无 · 串口设备可 <b>fy bb start</b></div>';
+     <span class="x" title="看现场" onclick="run('nxt blame ${esc(x.dev)}')" style="color:var(--yellow)">看</span>
+     <span class="x" title="停止" onclick="run('nxt bb stop ${esc(x.dev)}')">✕</span></div>`).join('') : '<div class="empty">无 · 串口设备可 <b>nxt bb start</b></div>';
   // 借网
   const sh=s.shares||[];
   document.getElementById('shcnt').textContent=sh.length?`(${sh.length})`:'';
   document.getElementById('shs').innerHTML = sh.length ? sh.map(x=>
     `<div class="strip"><span class="dot on"></span>${esc(x.dev)} <span class="k">${esc(x.mode)}</span>
-     <span class="x" title="关闭" onclick="run('fy share ${esc(x.dev)} --off')">✕</span></div>`).join('') : '';
+     <span class="x" title="关闭" onclick="run('nxt share ${esc(x.dev)} --off')">✕</span></div>`).join('') : '';
 }
 poll(); setInterval(poll, 3000);
 </script>

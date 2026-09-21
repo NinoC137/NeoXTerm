@@ -8,5 +8,5 @@ transport = "any"
 risk = "target-read + host-write"
 requires = []
 arguments = ["--out <local-directory>", "--no-brief", "--max-dt-nodes <N>"]
-summary = "Uses Ferry's native read-only hardware collector; target temporary files are removed after recovery."
+summary = "Uses NeoXTerm's native read-only hardware collector; target temporary files are removed after recovery."
 preview = ["Deploy a read-only collector in a private target temporary directory", "Download raw device-tree.tar into <destination>", "Download hardware.json and generate peripherals.md locally", "Remove the target temporary directory"]

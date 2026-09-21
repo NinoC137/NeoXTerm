@@ -1,4 +1,4 @@
-//! `fy scan`：一条命令找齐周围的下位机。
+//! `nxt scan`：一条命令找齐周围的下位机。
 //! - 本机各网段 TCP 并发探测 SSH/ADB 候选端口，并只保留可登录通道
 //! - 读 ssh banner（dropbear? OpenSSH? 顺手判断要不要 legacy 兼容）
 //! - ARP 表拿 MAC → 与指纹库比对，"老朋友换了 IP"自动认领
@@ -30,7 +30,7 @@ pub struct Hit {
     pub hostname: String,
     /// 怎么发现的：tcp / mdns / tcp+mdns
     pub via: String,
-    /// Ferry 已验证的交互通道；没有就不作为扫描结果返回。
+    /// NeoXTerm 已验证的交互通道；没有就不作为扫描结果返回。
     pub transport: Option<Transport>,
     /// SSH 或网络 ADB 的实际连接端口。
     pub login_port: u16,
@@ -132,7 +132,7 @@ pub fn local_nets() -> Vec<(String, u8)> {
                     // 可扫的局域网：对端只有 B 一个地址。把它当 /24 铺开会把上百个探测包灌进
                     // 隧道，而隧道对 connect_timeout 往往不兜底（典型如国内代理的
                     // 198.18.0.0/15 fake-ip 段，每个 connect 被挂住数秒），整轮扫描因此永不
-                    // 结束。要扫隧道对端就显式 `fy scan --subnet <cidr>`。
+                    // 结束。要扫隧道对端就显式 `nxt scan --subnet <cidr>`。
                     if t.contains("-->") {
                         continue;
                     }
@@ -339,7 +339,7 @@ pub fn sweep_opts(cfg: &Config, subnet_override: Option<&str>, use_mdns: bool) -
 
 /// Run discovery with explicitly requested extra SSH ports. Each extra port is
 /// still retained only after it identifies itself as SSH, preserving the
-/// actionable-result contract of `fy scan`.
+/// actionable-result contract of `nxt scan`.
 pub fn sweep_opts_with_ports(
     cfg: &Config,
     subnet_override: Option<&str>,
@@ -446,7 +446,7 @@ pub fn sweep_opts_with_ports(
         }
     }
     // mDNS, HTTP, telnet, and a bare TCP 5555 listener are discovery hints, not
-    // usable Ferry login paths. Keep only SSH-banner or verified ADB endpoints.
+    // usable NeoXTerm login paths. Keep only SSH-banner or verified ADB endpoints.
     hits.retain(|hit| hit.transport.is_some());
     hits
 }
@@ -488,7 +488,7 @@ fn expand_cidr(cidr: &str) -> Vec<String> {
         .collect()
 }
 
-/// `fy scan` 入口：网络 + adb + 串口 三合一视图，可交互建档/认领。
+/// `nxt scan` 入口：网络 + adb + 串口 三合一视图，可交互建档/认领。
 pub fn scan_cmd(cfg: &mut Config, subnet: Option<&str>, do_add: bool, use_mdns: bool) {
     scan_cmd_with_ports(cfg, subnet, do_add, use_mdns, &[])
 }
@@ -671,7 +671,7 @@ pub fn scan_cmd_with_ports(
             }
             cfg.devices.insert(name.clone(), d);
             let _ = cfg.save();
-            ok(&format!("已建档 {}。试试: fy sh {}", name, name));
+            ok(&format!("已建档 {}。试试: nxt sh {}", name, name));
             if candidates.is_empty() {
                 break;
             }
@@ -681,7 +681,7 @@ pub fn scan_cmd_with_ports(
     }
 }
 
-/// `fy scan --json`：把网络/adb/串口三类发现结果一次给出去。
+/// `nxt scan --json`：把网络/adb/串口三类发现结果一次给出去。
 pub fn scan_json(
     cfg: &Config,
     subnet: Option<&str>,

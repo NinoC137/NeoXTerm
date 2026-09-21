@@ -1,10 +1,10 @@
 # Architecture
 
-Ferry deliberately keeps the stable operational model in the Rust core, then exposes it through a CLI and two interactive clients. This avoids making the desktop or browser UI the source of truth for device behaviour.
+NeoXTerm deliberately keeps the stable operational model in the Rust core, then exposes it through a CLI and two interactive clients. This avoids making the desktop or browser UI the source of truth for device behaviour.
 
 ```mermaid
 flowchart LR
-  User["CLI, browser UI, or desktop app"] --> Core["Ferry Rust modules"]
+  User["CLI, browser UI, or desktop app"] --> Core["NeoXTerm Rust modules"]
   Core --> Profiles["Profiles, facts, and runtime state"]
   Core --> SSH["SSH"]
   Core --> ADB["ADB"]
@@ -18,7 +18,7 @@ flowchart LR
 
 The root crate is intentionally dependency-free: the core uses Rust's standard library and orchestrates host tools such as `ssh`, optional `adb`, `rsync`, and `stty`. `src/main.rs` owns CLI dispatch and global flags; `src/lib.rs` exposes the reusable modules needed by the native desktop client.
 
-Local state is scoped under `~/.config/ferry/`:
+Local state is scoped under `~/.config/neoxterm/`:
 
 | Location | Responsibility |
 | --- | --- |
@@ -52,7 +52,7 @@ SSH profiles retain host, port, user, identity-file, legacy-algorithm, host-key,
 
 ### ADB
 
-ADB operations resolve the selected device before each action. Ferry can anchor a port-invariant identity separately from a USB-sensitive serial, then reselect a live serial when a known device moves to another USB port. Network ADB is distinguished from a `usb:` selector rather than inferred from the presence of a colon.
+ADB operations resolve the selected device before each action. NeoXTerm can anchor a port-invariant identity separately from a USB-sensitive serial, then reselect a live serial when a known device moves to another USB port. Network ADB is distinguished from a `usb:` selector rather than inferred from the presence of a colon.
 
 ### Serial
 
@@ -62,11 +62,11 @@ Serial is both an access path and a recovery instrument. A black-box daemon can 
 
 ### Browser workbench
 
-`fy ui` serves a local browser UI on loopback by default. Its PTY bridge is a dedicated WebSocket endpoint. The server does not release startup input until a PTY writer exists; the client queues input until it receives an explicit ready message. This matters because a WebSocket handshake alone does not mean a child PTY is ready to receive bytes.
+`nxt ui` serves a local browser UI on loopback by default. Its PTY bridge is a dedicated WebSocket endpoint. The server does not release startup input until a PTY writer exists; the client queues input until it receives an explicit ready message. This matters because a WebSocket handshake alone does not mean a child PTY is ready to receive bytes.
 
 ### Tauri desktop workbench
 
-The native client is in `desktop/` and is built with Tauri, React, and xterm.js. It imports the Ferry Rust crate directly rather than duplicating transport logic. Its terminal endpoint is independent of the browser workbench, though it follows the same readiness and ordered-input rules. The client provides fleet, discovery, profile, terminal, operations, and plugin views; potentially disruptive guided workflows generate a plan before an explicit execute action.
+The native client is in `desktop/` and is built with Tauri, React, and xterm.js. It imports the NeoXTerm Rust crate directly rather than duplicating transport logic. Its terminal endpoint is independent of the browser workbench, though it follows the same readiness and ordered-input rules. The client provides fleet, discovery, profile, terminal, operations, and plugin views; potentially disruptive guided workflows generate a plan before an explicit execute action.
 
 The desktop app deliberately keeps sensitive boundaries narrow:
 
@@ -81,7 +81,7 @@ A local plugin package is a directory with a `plugin.toml` manifest and declared
 
 ## Change checklist
 
-When modifying Ferry, consider these questions:
+When modifying NeoXTerm, consider these questions:
 
 1. Which transport(s) can perform this operation, and what evidence proves the selected target is correct?
 2. Does it modify the host, target, or both? Is there a preflight and rollback path?

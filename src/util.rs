@@ -297,7 +297,7 @@ pub fn run_capture_timeout(
                         status: -1,
                         stdout: String::new(),
                         stderr: format!(
-                            "[ferry] 命令超时（{:.1}s）已被终止：{}",
+                            "[nxt] 命令超时（{:.1}s）已被终止：{}",
                             timeout.as_secs_f32(),
                             render_cmd(argv)
                         ),
@@ -364,12 +364,18 @@ pub fn home() -> PathBuf {
         .unwrap_or_else(|| PathBuf::from("/tmp"))
 }
 
-/// 配置根目录 ~/.config/ferry（可用 FERRY_HOME 覆盖）。
+/// 配置根目录 ~/.config/neoxterm（可用 NEOXTERM_HOME 覆盖）。
+/// 兼容改名前的 ~/.config/ferry 与 FERRY_HOME：新目录不存在而旧目录存在时继续用旧目录。
 pub fn cfg_dir() -> PathBuf {
-    if let Some(d) = std::env::var_os("FERRY_HOME") {
+    if let Some(d) = std::env::var_os("NEOXTERM_HOME").or_else(|| std::env::var_os("FERRY_HOME")) {
         return PathBuf::from(d);
     }
-    home().join(".config").join("ferry")
+    let new = home().join(".config").join("neoxterm");
+    let legacy = home().join(".config").join("ferry");
+    if !new.exists() && legacy.exists() {
+        return legacy;
+    }
+    new
 }
 
 pub fn ensure_dir(p: &Path) -> io::Result<()> {
@@ -571,7 +577,7 @@ pub fn slurp(p: &Path) -> String {
 
 /// 当前可执行文件绝对路径。
 pub fn self_exe() -> PathBuf {
-    std::env::current_exe().unwrap_or_else(|_| PathBuf::from("fy"))
+    std::env::current_exe().unwrap_or_else(|_| PathBuf::from("nxt"))
 }
 
 // ---------------- 人类可读的量 ----------------
@@ -614,7 +620,7 @@ pub fn human_dur(secs: f64) -> String {
 
 // ---------------- 传输进度条 ----------------
 
-/// 单行原地刷新的进度条。画在 **stderr**，所以 `fy pull dev /x - > file` 之类的
+/// 单行原地刷新的进度条。画在 **stderr**，所以 `nxt pull dev /x - > file` 之类的
 /// 管道用法不会被污染；非 tty / -q / --json / -n 时自动全程静默。
 pub struct Progress {
     label: String,
@@ -733,7 +739,7 @@ impl Drop for Progress {
     }
 }
 
-/// 弱随机十六进制串：给 `fy serve` 的 URL token、临时文件名用。
+/// 弱随机十六进制串：给 `nxt serve` 的 URL token、临时文件名用。
 /// 优先 /dev/urandom；拿不到就退回时间+pid 混合（**不做密码学用途**）。
 pub fn rand_hex(n: usize) -> String {
     let bytes = n.div_ceil(2);

@@ -1,16 +1,16 @@
 #!/bin/sh
-# ferry-gadget.sh — 板端 USB gadget 网络一键脚本（configfs，busybox 兼容）
-# 用法: ferry-gadget.sh start|stop|status
+# neoxterm-gadget.sh — 板端 USB gadget 网络一键脚本（configfs，busybox 兼容）
+# 用法: neoxterm-gadget.sh start|stop|status
 #   环境变量可覆盖: MODE=ncm|ecm|rndis  IP=10.55.0.2/30  WITH_ACM=1  SSHD=1
-# 由 ferry (fy usb gadget) 生成/推送。
+# 由 neoxterm (nxt usb gadget) 生成/推送。
 
 MODE="${MODE:-ncm}"          # ncm: macOS/Linux 主机首选; rndis: 老 Windows 主机
 IP="${IP:-10.55.0.2/30}"
 WITH_ACM="${WITH_ACM:-1}"    # 顺便暴露一个 USB 串口 console (/dev/ttyGS0)
 SSHD="${SSHD:-1}"            # 起来后尝试拉起 dropbear/sshd
-G=/sys/kernel/config/usb_gadget/ferry
+G=/sys/kernel/config/usb_gadget/neoxterm
 
-log() { echo "[ferry-gadget] $*"; }
+log() { echo "[neoxterm-gadget] $*"; }
 
 ensure_configfs() {
     [ -d /sys/kernel/config ] || { log "内核没有 configfs 支持"; return 1; }
@@ -25,7 +25,7 @@ ensure_configfs() {
 mac_from_id() {
     # 由机器标识生成稳定的本地管理 MAC，最后一位区分 host/dev
     seed="$(cat /etc/machine-id 2>/dev/null || cat /proc/cpuinfo 2>/dev/null | grep -i serial | head -1)"
-    [ -n "$seed" ] || seed="ferry-$(hostname 2>/dev/null)"
+    [ -n "$seed" ] || seed="neoxterm-$(hostname 2>/dev/null)"
     h="$(echo "$seed" | md5sum 2>/dev/null | cut -c1-8)"
     [ -n "$h" ] || h="00f0e011"
     a=$(echo "$h" | cut -c1-2); b=$(echo "$h" | cut -c3-4)
@@ -86,9 +86,9 @@ start() {
     echo 0x0100 > bcdDevice
     echo 0x0200 > bcdUSB
     mkdir -p strings/0x409
-    (cat /etc/machine-id 2>/dev/null || echo ferry0001) > strings/0x409/serialnumber
-    echo "ferry" > strings/0x409/manufacturer
-    echo "ferry usb-net gadget" > strings/0x409/product
+    (cat /etc/machine-id 2>/dev/null || echo neoxterm0001) > strings/0x409/serialnumber
+    echo "neoxterm" > strings/0x409/manufacturer
+    echo "neoxterm usb-net gadget" > strings/0x409/product
     mkdir -p configs/c.1/strings/0x409
     echo "net" > configs/c.1/strings/0x409/configuration
     echo 250 > configs/c.1/MaxPower
@@ -136,7 +136,7 @@ start() {
     sleep 1
     config_ip
     start_sshd
-    log "完成。主机侧运行: fy usb net"
+    log "完成。主机侧运行: nxt usb net"
 }
 
 stop_quiet() {

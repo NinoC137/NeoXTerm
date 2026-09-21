@@ -11,7 +11,7 @@ pub const HOST_IP: &str = "10.55.0.1";
 pub const BOARD_IP: &str = "10.55.0.2";
 pub const SUBNET: &str = "10.55.0.0/30";
 
-pub const GADGET_SH: &str = include_str!("../assets/ferry-gadget.sh");
+pub const GADGET_SH: &str = include_str!("../assets/neoxterm-gadget.sh");
 
 // ---------------- 网口枚举 ----------------
 
@@ -62,7 +62,7 @@ pub fn local_ip_on(ifname: &str) -> Option<String> {
     None
 }
 
-/// 本机所有非回环 IPv4：(网口, 地址)。`fy serve` 用它告诉你板子该访问哪个地址。
+/// 本机所有非回环 IPv4：(网口, 地址)。`nxt serve` 用它告诉你板子该访问哪个地址。
 pub fn local_ipv4s() -> Vec<(String, String)> {
     let mut out = vec![];
     for ifname in list_ifaces() {
@@ -126,7 +126,7 @@ pub fn route_iface_for(ip: &str) -> Option<(String, String)> {
             .position(|t| *t == "dev")
             .map(|i| toks[i + 1].to_string())?
     };
-    // 网段推测：ferry 的 /30 优先，否则按 /24 报
+    // 网段推测：neoxterm 的 /30 优先，否则按 /24 报
     let subnet = if ip.starts_with("10.55.0.") {
         SUBNET.to_string()
     } else {
@@ -141,14 +141,14 @@ pub fn route_iface_for(ip: &str) -> Option<(String, String)> {
     Some((ifname, subnet))
 }
 
-// ---------------- fy usb net：主机侧一键 ----------------
+// ---------------- nxt usb net：主机侧一键 ----------------
 
 pub fn usb_net(cfg: &mut Config, share: bool, add_as: Option<String>) -> Result<(), String> {
     info("记录当前网口快照 ...");
     let before = list_ifaces();
     println!(
         "{}",
-        yellow("现在插上（或重新插拔）板子的 USB 线 / 让板子跑 ferry-gadget.sh start ...")
+        yellow("现在插上（或重新插拔）板子的 USB 线 / 让板子跑 neoxterm-gadget.sh start ...")
     );
     let newif = if dry() {
         "usbX(dry)".to_string()
@@ -163,8 +163,9 @@ pub fn usb_net(cfg: &mut Config, share: bool, add_as: Option<String>) -> Result<
                 break;
             }
         }
-        found
-            .ok_or("30 秒内没等到新网口。检查线缆/板端 gadget 是否启动（fy usb gadget 生成脚本）")?
+        found.ok_or(
+            "30 秒内没等到新网口。检查线缆/板端 gadget 是否启动（nxt usb gadget 生成脚本）",
+        )?
     };
     ok(&format!("发现新网口: {}", newif));
 
@@ -227,7 +228,7 @@ pub fn usb_net(cfg: &mut Config, share: bool, add_as: Option<String>) -> Result<
         ok(&format!("板子 ssh 可达: {}:22", BOARD_IP));
     } else if !dry() {
         warn(&format!(
-            "{}:22 暂不可达（板端没起 sshd？串口跑一下 ferry-gadget.sh 看输出）",
+            "{}:22 暂不可达（板端没起 sshd？串口跑一下 neoxterm-gadget.sh 看输出）",
             BOARD_IP
         ));
     }
@@ -250,14 +251,14 @@ pub fn usb_net(cfg: &mut Config, share: bool, add_as: Option<String>) -> Result<
         ));
     } else if ssh_ok && !cfg.devices.values().any(|d| d.host == BOARD_IP) {
         info(&format!(
-            "提示: fy add <名字> --ssh root@{} 建档，之后 fy sh <名字> 直连",
+            "提示: nxt add <名字> --ssh root@{} 建档，之后 nxt sh <名字> 直连",
             BOARD_IP
         ));
     }
 
     if share {
         nat_enable(SUBNET).map_err(|e| e.to_string())?;
-        info("板端把网关指到主机即可全量上网：fy share <设备> --nat 一步到位");
+        info("板端把网关指到主机即可全量上网：nxt share <设备> --nat 一步到位");
     }
     Ok(())
 }
@@ -295,13 +296,13 @@ pub fn nat_enable(subnet: &str) -> std::io::Result<()> {
         } else {
             format!("{}{}", nat_line, orig)
         };
-        let tmp = std::env::temp_dir().join("ferry-pf.conf");
+        let tmp = std::env::temp_dir().join("neoxterm-pf.conf");
         std::fs::write(&tmp, conf)?;
         let _ = run_inherit(
             &argv(&["sudo", "pfctl", "-E", "-f", &tmp.display().to_string()]),
             &[],
         )?;
-        ok("pf NAT 已加载（fy share --off 恢复系统原始规则）");
+        ok("pf NAT 已加载（nxt share --off 恢复系统原始规则）");
     }
     #[cfg(not(target_os = "macos"))]
     {
@@ -434,7 +435,7 @@ pub fn gadget_emit(out: Option<&str>, mode: &str) -> std::io::Result<()> {
                 .arg("755")
                 .arg(p)
                 .status();
-            ok(&format!("已生成 {}（推到板上: fy usb install <设备>）", p));
+            ok(&format!("已生成 {}（推到板上: nxt usb install <设备>）", p));
         }
         None => {
             print!("{}", script);
@@ -449,13 +450,13 @@ pub fn gadget_install(d: &Device, mode: &str, autostart: bool) -> Result<(), Str
         "MODE=\"${MODE:-ncm}\"",
         &format!("MODE=\"${{MODE:-{}}}\"", mode),
     );
-    let path = "/usr/local/bin/ferry-gadget.sh";
+    let path = "/usr/local/bin/neoxterm-gadget.sh";
     let okk = match d.transport {
         Transport::Ssh => {
             sshx::write_remote_file(d, path, &script, "755").map_err(|e| e.to_string())?
         }
         Transport::Adb => {
-            let tmp = std::env::temp_dir().join("ferry-gadget.sh");
+            let tmp = std::env::temp_dir().join("neoxterm-gadget.sh");
             std::fs::write(&tmp, &script).map_err(|e| e.to_string())?;
             crate::adbx::push(d, &tmp, path).map_err(|e| e.to_string())?
                 && crate::adbx::exec_capture(d, &format!("chmod 755 {}", path))
@@ -464,7 +465,8 @@ pub fn gadget_install(d: &Device, mode: &str, autostart: bool) -> Result<(), Str
         }
         Transport::Serial => {
             return Err(
-                "串口通道推脚本太慢，先 fy up 打通网络，或 fy usb gadget --out 拷出去手动放".into(),
+                "串口通道推脚本太慢，先 nxt up 打通网络，或 nxt usb gadget --out 拷出去手动放"
+                    .into(),
             )
         }
     };
@@ -473,16 +475,16 @@ pub fn gadget_install(d: &Device, mode: &str, autostart: bool) -> Result<(), Str
     }
     ok(&format!("已安装 {} 到 {}", path, d.name));
     if autostart {
-        let unit = "[Unit]\nDescription=ferry usb gadget network\nAfter=local-fs.target\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/ferry-gadget.sh start\nRemainAfterExit=yes\nExecStop=/usr/local/bin/ferry-gadget.sh stop\n\n[Install]\nWantedBy=multi-user.target\n";
+        let unit = "[Unit]\nDescription=neoxterm usb gadget network\nAfter=local-fs.target\n\n[Service]\nType=oneshot\nExecStart=/usr/local/bin/neoxterm-gadget.sh start\nRemainAfterExit=yes\nExecStop=/usr/local/bin/neoxterm-gadget.sh stop\n\n[Install]\nWantedBy=multi-user.target\n";
         let cmd = format!(
             "if command -v systemctl >/dev/null 2>&1; then \
-               printf '%s' '{unit}' > /etc/systemd/system/ferry-gadget.service && \
-               systemctl daemon-reload && systemctl enable ferry-gadget.service && echo FERRY_SYSTEMD_OK; \
+               printf '%s' '{unit}' > /etc/systemd/system/neoxterm-gadget.service && \
+               systemctl daemon-reload && systemctl enable neoxterm-gadget.service && echo NEOXTERM_SYSTEMD_OK; \
              elif [ -f /etc/rc.local ]; then \
-               grep -q ferry-gadget /etc/rc.local || sed -i 's#^exit 0#{path} start\\nexit 0#' /etc/rc.local; echo FERRY_RCLOCAL_OK; \
+               grep -q neoxterm-gadget /etc/rc.local || sed -i 's#^exit 0#{path} start\\nexit 0#' /etc/rc.local; echo NEOXTERM_RCLOCAL_OK; \
              elif [ -d /etc/init.d ]; then \
-               ln -sf {path} /etc/init.d/S99ferry-gadget 2>/dev/null; echo FERRY_INITD_OK; \
-             else echo FERRY_MANUAL; fi",
+               ln -sf {path} /etc/init.d/S99neoxterm-gadget 2>/dev/null; echo NEOXTERM_INITD_OK; \
+             else echo NEOXTERM_MANUAL; fi",
             unit = unit.replace('\'', "'\\''").replace('\n', "\\n"),
             path = path
         );
@@ -494,14 +496,14 @@ pub fn gadget_install(d: &Device, mode: &str, autostart: bool) -> Result<(), Str
         if dry() {
             return Ok(());
         }
-        if out.stdout.contains("FERRY_SYSTEMD_OK") {
-            ok("已注册 systemd 开机自启 (ferry-gadget.service)");
-        } else if out.stdout.contains("FERRY_RCLOCAL_OK") {
+        if out.stdout.contains("NEOXTERM_SYSTEMD_OK") {
+            ok("已注册 systemd 开机自启 (neoxterm-gadget.service)");
+        } else if out.stdout.contains("NEOXTERM_RCLOCAL_OK") {
             ok("已挂到 /etc/rc.local 开机自启");
-        } else if out.stdout.contains("FERRY_INITD_OK") {
-            ok("已链接 /etc/init.d/S99ferry-gadget（BusyBox init 风格）");
+        } else if out.stdout.contains("NEOXTERM_INITD_OK") {
+            ok("已链接 /etc/init.d/S99neoxterm-gadget（BusyBox init 风格）");
         } else {
-            warn("没识别出板上的 init 系统，请手动把 ferry-gadget.sh start 挂到开机脚本");
+            warn("没识别出板上的 init 系统，请手动把 neoxterm-gadget.sh start 挂到开机脚本");
         }
     } else {
         info(&format!(

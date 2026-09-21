@@ -1,5 +1,5 @@
-//! `fy run`：交叉编译产物一键上板执行（push + chmod + 运行 + 回传退出码）。
-//! `fy debug`：gdbserver 一条龙（起服务 + 端口转发 + 给出 gdb 连接命令）。
+//! `nxt run`：交叉编译产物一键上板执行（push + chmod + 运行 + 回传退出码）。
+//! `nxt debug`：gdbserver 一条龙（起服务 + 端口转发 + 给出 gdb 连接命令）。
 
 use crate::adbx;
 use crate::config::{Config, Device, Transport};
@@ -37,7 +37,7 @@ pub fn run(
         Transport::Serial => {
             return Err(std::io::Error::new(
                 std::io::ErrorKind::Other,
-                "串口推不了文件，先 fy up",
+                "串口推不了文件，先 nxt up",
             ))
         }
     };
@@ -86,7 +86,7 @@ pub fn debug(
     if !has && !dry() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::Other,
-            "板上没有 gdbserver。把交叉工具链里的 gdbserver push 上去（fy push <dev> gdbserver /usr/bin/）",
+            "板上没有 gdbserver。把交叉工具链里的 gdbserver push 上去（nxt push <dev> gdbserver /usr/bin/）",
         ));
     }
     let rpath = remote_bin_path(d, local);

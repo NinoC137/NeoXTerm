@@ -1,5 +1,5 @@
 //! 端口转发管理器：ssh 隧道挂在 ControlMaster 上动态增删（-O forward/cancel），
-//! adb 用 forward/reverse。统一 spec 语法，统一 `fy fwd ls` 视图。
+//! adb 用 forward/reverse。统一 spec 语法，统一 `nxt fwd ls` 视图。
 //!
 //! spec 语法（一看就懂，不用背 ssh 手册）：
 //!   8080            本机 8080 → 板子 127.0.0.1:8080
@@ -24,7 +24,7 @@ pub enum Spec {
 impl Spec {
     pub fn parse(s: &str) -> Result<Spec, String> {
         let parts: Vec<&str> = s.split(':').collect();
-        let bad = || format!("看不懂的转发规则 '{}'（用法见 fy help fwd）", s);
+        let bad = || format!("看不懂的转发规则 '{}'（用法见 nxt help fwd）", s);
         let port = |x: &str| x.parse::<u16>().map_err(|_| bad());
         match parts.as_slice() {
             [p] => {
@@ -94,7 +94,7 @@ pub fn add(cfg: &Config, dev: &Device, spec_str: &str) -> Result<String, String>
     add_opts(cfg, dev, spec_str, true)
 }
 
-/// `watch=false` 时不自动拉起保活守护进程（`fy fwd ... --no-watch`）。
+/// `watch=false` 时不自动拉起保活守护进程（`nxt fwd ... --no-watch`）。
 pub fn add_opts(cfg: &Config, dev: &Device, spec_str: &str, watch: bool) -> Result<String, String> {
     let spec = Spec::parse(spec_str)?;
     match dev.transport {
@@ -153,7 +153,7 @@ pub fn add_opts(cfg: &Config, dev: &Device, spec_str: &str, watch: bool) -> Resu
             }
             Spec::D { .. } => return Err("adb 不支持 SOCKS 动态代理（换 ssh 通道）".into()),
         },
-        Transport::Serial => return Err("串口设备没有网络转发；先 `fy up` 爬升到 ssh".into()),
+        Transport::Serial => return Err("串口设备没有网络转发；先 `nxt up` 爬升到 ssh".into()),
     }
     let _ = cfg;
     Ok(String::new())
@@ -250,7 +250,7 @@ pub fn collect(cfg: &Config) -> Vec<FwdView> {
 pub fn list(cfg: &Config) {
     let views = collect(cfg);
     if views.is_empty() {
-        info("当前没有任何转发。加一个: fy fwd <设备> 8080");
+        info("当前没有任何转发。加一个: nxt fwd <设备> 8080");
         return;
     }
     let watching = watchd::is_running();
@@ -267,7 +267,7 @@ pub fn list(cfg: &Config) {
                 } else if watching {
                     yellow("断(保活正在重连)")
                 } else {
-                    red("断(fy watch start 可自动重连)")
+                    red("断(nxt watch start 可自动重连)")
                 },
                 if v.added > 0 {
                     human_ago(v.added)
@@ -279,7 +279,7 @@ pub fn list(cfg: &Config) {
         .collect();
     print_table(&["ID", "设备", "通道", "转发", "状态", "建立"], &rows);
     if !watching && views.iter().any(|v| !v.alive) {
-        info("有转发掉线了。`fy watch start` 之后会自动重连并重放转发。");
+        info("有转发掉线了。`nxt watch start` 之后会自动重连并重放转发。");
     }
 }
 

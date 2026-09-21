@@ -220,7 +220,7 @@ mod tests {
 
     #[test]
     fn file_hash_with_limit() {
-        let p = std::env::temp_dir().join(format!("ferry_hash_{}.bin", std::process::id()));
+        let p = std::env::temp_dir().join(format!("neoxterm_hash_{}.bin", std::process::id()));
         std::fs::write(&p, b"abcdef").unwrap();
         assert_eq!(sha256_file(&p, Some(3)).unwrap(), sha256_hex(b"abc"));
         assert_eq!(sha256_file(&p, None).unwrap(), sha256_hex(b"abcdef"));

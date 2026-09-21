@@ -54,7 +54,7 @@ const iconForTransport = (transport: string) => {
 };
 
 type ThemeMode = "dark" | "light";
-const THEME_STORAGE_KEY = "ferry-theme";
+const THEME_STORAGE_KEY = "neoxterm-theme";
 
 // Resolve the startup theme: an explicit past choice wins, otherwise follow the
 // operating system. Read once at module load so the correct palette is on the
@@ -275,7 +275,7 @@ function App() {
         <header className="brand-row">
           <button className="brand-mark" title="Open fleet overview" onClick={() => setView("overview")}><Network size={19} /></button>
           <div>
-            <strong>Ferry</strong>
+            <strong>NeoXTerm</strong>
             <span>DEVICE WORKBENCH</span>
           </div>
           <button className="icon-button" title="Refresh device status" onClick={() => void refreshDevices()} disabled={busy}>
@@ -376,14 +376,14 @@ function App() {
         </div>
         <footer className="statusbar"><span><span className="status-dot online" /> Desktop ready</span><span>{selectedDevice?.transport?.toUpperCase() ?? "NO DEVICE"}</span><span>{tabs.length} terminal {tabs.length === 1 ? "session" : "sessions"}</span></footer>
       </section>
-      {keyConfirmOpen && <div className="modal-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="key-confirm-title"><KeyRound size={20} /><h2 id="key-confirm-title">Install SSH public key?</h2><p>Ferry will add this computer's public key to <code>{selected}</code>, including the Dropbear key path when present, then verify login with password authentication disabled.</p><p>The one-time password is not saved.</p><div className="modal-actions"><button onClick={() => setKeyConfirmOpen(false)}>Cancel</button><button className="confirm-button" onClick={() => void installPublicKey()}>Install and verify</button></div></section></div>}
-      {deleteConfirmOpen && <div className="modal-backdrop" role="presentation"><section className="confirm-modal destructive-modal" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title"><Trash2 size={20} /><h2 id="delete-confirm-title">Delete device profile?</h2><p>Ferry will remove the saved profile and local fingerprint for <code>{selected}</code>. The remote device is not changed.</p><p>Any terminal session already open for this device remains connected until you close its tab.</p><div className="modal-actions"><button onClick={() => setDeleteConfirmOpen(false)}>Cancel</button><button className="delete-confirm-button" onClick={() => void deleteProfile()}>Delete profile</button></div></section></div>}
+      {keyConfirmOpen && <div className="modal-backdrop" role="presentation"><section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="key-confirm-title"><KeyRound size={20} /><h2 id="key-confirm-title">Install SSH public key?</h2><p>NeoXTerm will add this computer's public key to <code>{selected}</code>, including the Dropbear key path when present, then verify login with password authentication disabled.</p><p>The one-time password is not saved.</p><div className="modal-actions"><button onClick={() => setKeyConfirmOpen(false)}>Cancel</button><button className="confirm-button" onClick={() => void installPublicKey()}>Install and verify</button></div></section></div>}
+      {deleteConfirmOpen && <div className="modal-backdrop" role="presentation"><section className="confirm-modal destructive-modal" role="dialog" aria-modal="true" aria-labelledby="delete-confirm-title"><Trash2 size={20} /><h2 id="delete-confirm-title">Delete device profile?</h2><p>NeoXTerm will remove the saved profile and local fingerprint for <code>{selected}</code>. The remote device is not changed.</p><p>Any terminal session already open for this device remains connected until you close its tab.</p><div className="modal-actions"><button onClick={() => setDeleteConfirmOpen(false)}>Cancel</button><button className="delete-confirm-button" onClick={() => void deleteProfile()}>Delete profile</button></div></section></div>}
     </main>
   );
 }
 
 const rootContainer = document.getElementById("root")!;
-const rootWindow = window as typeof window & { __ferryRoot?: ReturnType<typeof createRoot> };
-const root = rootWindow.__ferryRoot ?? createRoot(rootContainer);
-rootWindow.__ferryRoot = root;
+const rootWindow = window as typeof window & { __neoxtermRoot?: ReturnType<typeof createRoot> };
+const root = rootWindow.__neoxtermRoot ?? createRoot(rootContainer);
+rootWindow.__neoxtermRoot = root;
 root.render(<App />);

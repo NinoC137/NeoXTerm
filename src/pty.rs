@@ -148,7 +148,7 @@ impl Pty {
         let shell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/bash".into());
         let mut env: Vec<(String, String)> = vec![
             ("TERM".into(), "xterm-256color".into()),
-            ("FERRY_UI".into(), "1".into()),
+            ("NEOXTERM_UI".into(), "1".into()),
         ];
         env.extend_from_slice(extra_env);
         // -i 交互；bash/zsh 都认

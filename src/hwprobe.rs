@@ -43,7 +43,7 @@ fn remote_capture(d: &Device, command: &str) -> std::io::Result<Output> {
 
 fn target_dir(base: &str) -> String {
     format!(
-        "{}/ferry-hwprobe-{}-{}",
+        "{}/neoxterm-hwprobe-{}-{}",
         base,
         std::process::id(),
         crate::util::now_epoch()
@@ -108,7 +108,7 @@ fn prepare_remote_dir(d: &Device) -> std::result::Result<String, String> {
     }
     let kind = if android { "Android" } else { "target" };
     Err(format!(
-        "无法在 {kind} 上创建 Ferry 临时目录（尝试 {}）: {}",
+        "无法在 {kind} 上创建 NeoXTerm 临时目录（尝试 {}）: {}",
         bases.join(", "),
         failures.join("; ")
     ))
@@ -156,7 +156,7 @@ fn upload(d: &Device, remote_dir: &str, remote_script: &str) -> std::io::Result<
                 ));
             }
             let local =
-                std::env::temp_dir().join(format!("ferry-hwprobe-{}.sh", std::process::id()));
+                std::env::temp_dir().join(format!("neoxterm-hwprobe-{}.sh", std::process::id()));
             fs::write(&local, SCRIPT)?;
             let local_s = local.display().to_string();
             let out = run_capture(&adbx::adb_argv(d, &["push", &local_s, remote_script]), &[])?;
@@ -231,7 +231,7 @@ fn remove_remote(d: &Device, dir: &str) {
 
 pub fn collect(d: &Device, o: &Options) -> std::result::Result<Result, String> {
     if d.transport == Transport::Serial {
-        return Err("串口通道无法可靠回收二进制设备树；先执行 fy up 获取 ssh 或 adb 通道".into());
+        return Err("串口通道无法可靠回收二进制设备树；先执行 nxt up 获取 ssh 或 adb 通道".into());
     }
     if dry() {
         return Ok(Result {
@@ -323,7 +323,7 @@ mod tests {
 
     #[test]
     fn embedded_script_has_valid_shell_syntax() {
-        let path = std::env::temp_dir().join(format!("ferry-hwprobe-{}.sh", std::process::id()));
+        let path = std::env::temp_dir().join(format!("neoxterm-hwprobe-{}.sh", std::process::id()));
         fs::write(&path, SCRIPT).unwrap();
         assert!(Command::new("/bin/sh")
             .arg("-n")

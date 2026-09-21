@@ -1,5 +1,5 @@
-//! `fy doctor`：主机环境自检 + 板子体检。
-//! `fy fix time`：无 RTC 电池的板子一键对时（告别 1970 年）。
+//! `nxt doctor`：主机环境自检 + 板子体检。
+//! `nxt fix time`：无 RTC 电池的板子一键对时（告别 1970 年）。
 
 use crate::adbx;
 use crate::config::{Config, Device, Transport};
@@ -63,7 +63,7 @@ fn host_doctor(cfg: &Config) {
     check(
         "ssh-keygen",
         which("ssh-keygen").is_some(),
-        "免密 (fy keyup) 需要",
+        "免密 (nxt keyup) 需要",
     );
 
     let cfgd = cfg_dir();
@@ -81,7 +81,7 @@ fn host_doctor(cfg: &Config) {
     let st = crate::config::State::load();
     let fwds = st.forwards().len();
     if fwds > 0 {
-        println!("  {} 条 ssh 转发记录 (fy fwd ls 查看)", fwds);
+        println!("  {} 条 ssh 转发记录 (nxt fwd ls 查看)", fwds);
     }
     let serial_ports = crate::serialx::serial_ports();
     if !serial_ports.is_empty() {
@@ -104,7 +104,7 @@ fn board_doctor(d: &Device) {
         Transport::Ssh => sshx::exec_capture(d, script),
         Transport::Adb => adbx::exec_capture(d, script),
         Transport::Serial => {
-            warn("串口设备先 fy up 打通网络再体检");
+            warn("串口设备先 nxt up 打通网络再体检");
             return;
         }
     };
@@ -130,7 +130,7 @@ fn board_doctor(d: &Device) {
         check(
             &format!("系统时间 (偏差 {}s)", drift),
             drift < 60,
-            "时间不对会导致 TLS/编译时间戳问题 → fy fix time <dev>",
+            "时间不对会导致 TLS/编译时间戳问题 → nxt fix time <dev>",
         );
     }
     if let Some(ro) = get("RO") {
@@ -151,7 +151,7 @@ fn board_doctor(d: &Device) {
         check(
             "DNS 配置",
             dns > 0,
-            "没有 nameserver：fy share <dev> 借网时会自动处理，或手动写 /etc/resolv.conf",
+            "没有 nameserver：nxt share <dev> 借网时会自动处理，或手动写 /etc/resolv.conf",
         );
     }
     if let Some(oom) = get("OOM").and_then(|v| v.parse::<i64>().ok()) {
@@ -179,7 +179,7 @@ pub fn fix_time(d: &Device) -> Result<(), String> {
     let stamp = out.stdout.trim().to_string();
     let cmd = format!(
         "(date -s @{e} >/dev/null 2>&1 || date -u -s @{e} >/dev/null 2>&1 || date -u {s} >/dev/null 2>&1 || su 0 date -u {s} >/dev/null 2>&1) && \
-         (hwclock -w 2>/dev/null; true) && echo FERRY_TIME_OK $(date)",
+         (hwclock -w 2>/dev/null; true) && echo NEOXTERM_TIME_OK $(date)",
         e = epoch,
         s = stamp
     );
@@ -187,16 +187,16 @@ pub fn fix_time(d: &Device) -> Result<(), String> {
         Transport::Ssh => sshx::exec_capture(d, &cmd).map_err(|e| e.to_string())?,
         Transport::Adb => adbx::exec_capture(d, &cmd).map_err(|e| e.to_string())?,
         Transport::Serial => {
-            return Err("串口设备先 fy up 打通网络（或在 console 里手动 date -s）".into())
+            return Err("串口设备先 nxt up 打通网络（或在 console 里手动 date -s）".into())
         }
     };
     if dry() {
         return Ok(());
     }
-    if o.stdout.contains("FERRY_TIME_OK") {
+    if o.stdout.contains("NEOXTERM_TIME_OK") {
         ok(&format!(
             "板子时间已同步: {}",
-            o.stdout.replace("FERRY_TIME_OK", "").trim()
+            o.stdout.replace("NEOXTERM_TIME_OK", "").trim()
         ));
         Ok(())
     } else {
@@ -208,7 +208,7 @@ pub fn fix_time(d: &Device) -> Result<(), String> {
     }
 }
 
-/// `fy doctor --json`：agent 最关心的两件事——主机依赖齐不齐、板子够不够得着。
+/// `nxt doctor --json`：agent 最关心的两件事——主机依赖齐不齐、板子够不够得着。
 pub fn doctor_json(cfg: &Config, dev: Option<&Device>) -> Vec<(&'static str, crate::jsonout::J)> {
     use crate::jsonout::J;
     let tool = |name: &str| -> J {

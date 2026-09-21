@@ -1,7 +1,7 @@
 //! 极简 HTTP/1.1 服务（零依赖）：请求解析 + 响应构造 + 路由循环。
 //! 支持 WebSocket 升级（把裸 TcpStream 交给上层）。
 //!
-//! `fy ui` 绑 127.0.0.1；`fy serve` 要给板子下载文件，会绑到局域网地址，
+//! `nxt ui` 绑 127.0.0.1；`nxt serve` 要给板子下载文件，会绑到局域网地址，
 //! 所以这里额外提供了 Range 断点续传、流式发送、以及**不把请求体读进内存**的
 //! `serve_full`（上传几百 MB 的镜像不能 OOM）。
 
@@ -77,7 +77,7 @@ pub fn parse_request(stream: &mut BufReader<TcpStream>) -> Option<Request> {
     let (path, query) = split_query(&raw_path);
 
     let mut headers = HashMap::new();
-    // 头部条数封顶：`fy serve` 会绑到局域网，别让一个连接把内存吃光
+    // 头部条数封顶：`nxt serve` 会绑到局域网，别让一个连接把内存吃光
     for _ in 0..200 {
         let mut h = String::new();
         if stream.read_line(&mut h).ok()? == 0 {
@@ -315,7 +315,7 @@ where
         };
         let handler = handler.clone();
         std::thread::spawn(move || {
-            // 读头部时给个超时：绑在 0.0.0.0 上的 `fy serve` 不该被一个
+            // 读头部时给个超时：绑在 0.0.0.0 上的 `nxt serve` 不该被一个
             // 半开的连接永久占住一个线程（慢速攻击，或者只是板子拔了网线）
             let _ = stream.set_read_timeout(Some(std::time::Duration::from_secs(30)));
             let mut reader = BufReader::new(match stream.try_clone() {

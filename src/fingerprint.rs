@@ -1,5 +1,5 @@
 //! 设备指纹：连接时顺手采集 machine-id / MAC / CPU 序列号等身份信息，
-//! 让"板子换了 IP / 重刷了系统"之后 ferry 还能认出它。
+//! 让"板子换了 IP / 重刷了系统"之后 neoxterm 还能认出它。
 
 use crate::adbx;
 use crate::config::{self, Device, Facts, Transport};
@@ -117,7 +117,7 @@ pub fn match_known(mac: Option<&str>, machine_id: Option<&str>) -> Option<String
     None
 }
 
-/// `fy info <dev>`：身份卡片 + 实时状态。
+/// `nxt info <dev>`：身份卡片 + 实时状态。
 pub fn info_card(d: &Device) {
     let f = config::facts_load(&d.name);
     println!(

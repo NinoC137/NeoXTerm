@@ -14,7 +14,7 @@
 - **身份感知的发现**：验证端点并保存指纹，在 DHCP、刷机或 USB 口变化后重新认领设备。
 - **可靠操作**：支持可续传、可校验的传输，命令执行、端口转发、借网和串口恢复。
 - **硬件证据**：只读采集器可保存 `hardware.json`、可选外设摘要和设备树归档。
-- **自动化与桌面端**：`fy --json`、本地浏览器终端和 Tauri 桌面应用共用同一核心。
+- **自动化与桌面端**：`nxt --json`、本地浏览器终端和 Tauri 桌面应用共用同一核心。
 
 ## 安装
 
@@ -24,12 +24,12 @@
 git clone https://github.com/NinoC137/NeoXTerm.git
 cd NeoXTerm
 cargo build --release
-install -m755 target/release/fy /usr/local/bin/fy
+install -m755 target/release/nxt /usr/local/bin/nxt
 
-fy doctor
+nxt doctor
 ```
 
-命令行名称仍为 `fy`。改名前已有的设备档案和身份事实可继续兼容使用。
+命令行名称已由 `fy` 改为 `nxt`。改名前已有的设备档案和身份事实可继续兼容使用。
 
 桌面端还需要 Node.js 与常规 Tauri 构建前置条件：
 
@@ -47,35 +47,35 @@ macOS 发布产物位于 `target/release/bundle/macos/NeoXTerm.app`。
 先创建档案，之后各项操作都复用设备名。通道仅代表当前连接路径：只有串口的设备之后也可升格为 SSH。
 
 ```bash
-fy add rk --ssh root@192.168.1.37
-fy add phone --adb
-fy add mcu --serial /dev/tty.usbserial-1420 --baud 1500000
+nxt add rk --ssh root@192.168.1.37
+nxt add phone --adb
+nxt add mcu --serial /dev/tty.usbserial-1420 --baud 1500000
 
-fy scan --add                   # 发现并保存可达设备
-fy sh rk                         # 打开 shell
-fy sh rk -- uname -a             # 执行一条远端命令
-fy info rk                       # 查看已保存的身份事实
-fy push rk ./app /tmp/           # 带校验、可续传地上传
-fy run rk ./app --help           # 上传、运行并返回远端退出码
+nxt scan --add                   # 发现并保存可达设备
+nxt sh rk                         # 打开 shell
+nxt sh rk -- uname -a             # 执行一条远端命令
+nxt info rk                       # 查看已保存的身份事实
+nxt push rk ./app /tmp/           # 带校验、可续传地上传
+nxt run rk ./app --help           # 上传、运行并返回远端退出码
 ```
 
 ## 常用任务
 
 | 需求 | 从这里开始 |
 | --- | --- |
-| 发现或确认开发板 | [`fy scan`、`fy info`](docs/operations.zh-CN.md#发现与身份确认) |
-| 终端、日志或并行命令 | [`fy sh`、`fy log`、`fy all`](docs/operations.zh-CN.md#日常操作) |
-| 传输、部署或调试 | [`fy push`、`fy run`、`fy debug`、`fy sync`](docs/operations.zh-CN.md#传输与部署) |
-| 端口转发或借用网络 | [`fy fwd`、`fy share`、`fy net`](docs/operations.zh-CN.md#连通性与网络) |
-| 恢复只剩串口的设备 | [`fy bb`、`fy blame`、`fy up`](docs/operations.zh-CN.md#串口恢复) |
-| 采集硬件事实或安装本地扩展 | [`fy hw`、`fy plugin`](docs/operations.zh-CN.md#硬件采集) |
-| 对接脚本或 Agent | [`fy --json`、`fy help --json`](docs/operations.zh-CN.md#自动化与-json) |
+| 发现或确认开发板 | [`nxt scan`、`nxt info`](docs/operations.zh-CN.md#发现与身份确认) |
+| 终端、日志或并行命令 | [`nxt sh`、`nxt log`、`nxt all`](docs/operations.zh-CN.md#日常操作) |
+| 传输、部署或调试 | [`nxt push`、`nxt run`、`nxt debug`、`nxt sync`](docs/operations.zh-CN.md#传输与部署) |
+| 端口转发或借用网络 | [`nxt fwd`、`nxt share`、`nxt net`](docs/operations.zh-CN.md#连通性与网络) |
+| 恢复只剩串口的设备 | [`nxt bb`、`nxt blame`、`nxt up`](docs/operations.zh-CN.md#串口恢复) |
+| 采集硬件事实或安装本地扩展 | [`nxt hw`、`nxt plugin`](docs/operations.zh-CN.md#硬件采集) |
+| 对接脚本或 Agent | [`nxt --json`、`nxt help --json`](docs/operations.zh-CN.md#自动化与-json) |
 
-执行 `fy ui` 可打开本地浏览器终端。Tauri 桌面应用提供设备总览、档案编辑、终端、受保护的操作和插件；高影响操作会先展示预检计划。
+执行 `nxt ui` 可打开本地浏览器终端。Tauri 桌面应用提供设备总览、档案编辑、终端、受保护的操作和插件；高影响操作会先展示预检计划。
 
 ## 安全与开发
 
-涉及设备网络、启动配置、主机路由、防火墙或服务的操作前，请先用 `fy --dry-run` 查看计划。`fy share --nat`、`fy usb net --share`、USB gadget 设置和持久代理可能需要提权或改变网络状态。仅扫描你有权探测的网络；优先使用 `fy keyup`，避免在设备档案中保存密码。
+涉及设备网络、启动配置、主机路由、防火墙或服务的操作前，请先用 `nxt --dry-run` 查看计划。`nxt share --nat`、`nxt usb net --share`、USB gadget 设置和持久代理可能需要提权或改变网络状态。仅扫描你有权探测的网络；优先使用 `nxt keyup`，避免在设备档案中保存密码。
 
 ```bash
 cargo test -p neoxterm --lib

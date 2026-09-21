@@ -1,8 +1,8 @@
-//! Local Ferry plugin packages.
+//! Local NeoXTerm plugin packages.
 //!
 //! A plugin is deliberately a local, reviewable package rather than a dynamic
 //! library: `plugin.toml` declares the entrypoint and constraints, while a
-//! normal executable/script implements the feature. Ferry supplies the chosen
+//! normal executable/script implements the feature. NeoXTerm supplies the chosen
 //! device context and consistent SSH options, but never saves plugin secrets.
 
 use crate::config::{Device, Transport};
@@ -147,7 +147,7 @@ pub fn list() -> Result<Vec<Plugin>, String> {
         }
         match load_dir(&path) {
             Ok(plugin) => plugins.push(plugin),
-            Err(error) => eprintln!("ferry: ignoring plugin {}: {error}", path.display()),
+            Err(error) => eprintln!("nxt: ignoring plugin {}: {error}", path.display()),
         }
     }
     plugins.sort_by(|left, right| left.id.cmp(&right.id));
@@ -304,7 +304,7 @@ pub fn preview(plugin: &Plugin, device: &Device, arguments: &[String]) -> Result
         let mut steps = vec![
             format!("Target: {target}"),
             "Risk: target-read + host-write".into(),
-            "Deploy Ferry's read-only hardware collector into a private target temporary directory.".into(),
+            "Deploy NeoXTerm's read-only hardware collector into a private target temporary directory.".into(),
             format!("Recover raw device tree: {}", options.output_dir.join("device-tree.tar").display()),
             format!("Recover hardware report: {}", options.output_dir.join("hardware.json").display()),
             "Remove the target temporary directory after collection, including on a failed transfer.".into(),
@@ -414,7 +414,7 @@ fn run_device_tree_pull(
     let options = device_tree_options(arguments)?;
     let mut device = device.clone();
     if !include_profile_password {
-        // The desktop bundle cannot act as Ferry's CLI askpass helper. More
+        // The desktop bundle cannot act as NeoXTerm's CLI askpass helper. More
         // importantly, this native operation needs no password exposure.
         device.password = None;
     }
@@ -443,20 +443,20 @@ fn run_device_tree_pull(
 
 fn environment(device: &Device, non_interactive: bool, include_profile_password: bool) -> Vec<(String, String)> {
     let mut environment = vec![
-        ("FERRY_PLUGIN".into(), "1".into()),
-        ("FERRY_DEVICE_NAME".into(), device.name.clone()),
-        ("FERRY_DEVICE_TRANSPORT".into(), device.transport.as_str().into()),
-        ("FERRY_DEVICE_HOST".into(), device.host.clone()),
-        ("FERRY_DEVICE_PORT".into(), device.port.to_string()),
-        ("FERRY_DEVICE_USER".into(), device.user.clone()),
+        ("NEOXTERM_PLUGIN".into(), "1".into()),
+        ("NEOXTERM_DEVICE_NAME".into(), device.name.clone()),
+        ("NEOXTERM_DEVICE_TRANSPORT".into(), device.transport.as_str().into()),
+        ("NEOXTERM_DEVICE_HOST".into(), device.host.clone()),
+        ("NEOXTERM_DEVICE_PORT".into(), device.port.to_string()),
+        ("NEOXTERM_DEVICE_USER".into(), device.user.clone()),
     ];
     if non_interactive {
-        environment.push(("FERRY_PLUGIN_NONINTERACTIVE".into(), "1".into()));
+        environment.push(("NEOXTERM_PLUGIN_NONINTERACTIVE".into(), "1".into()));
     }
     if device.transport == Transport::Ssh {
         let mut ssh = vec!["ssh".to_string()];
         ssh.extend(sshx::base_opts(device));
-        environment.push(("FERRY_SSH_RSH".into(), render_cmd(&ssh)));
+        environment.push(("NEOXTERM_SSH_RSH".into(), render_cmd(&ssh)));
         if include_profile_password {
             environment.extend(sshx::askpass_env(device));
         }
@@ -482,7 +482,7 @@ pub fn run_capture_plugin(plugin: &Plugin, device: &Device, arguments: &[String]
         return run_device_tree_pull(device, arguments, false);
     }
     let argv = invocation_argv(plugin, arguments)?;
-    // A desktop host is not the `fy` askpass executable. It deliberately runs
+    // A desktop host is not the `nxt` askpass executable. It deliberately runs
     // plugins with key authentication only, so a stored profile password can
     // never be exposed to an extension or a broken askpass callback.
     let Output { status, stdout, stderr } = run_capture(&argv, &environment(device, true, false)).map_err(|error| error.to_string())?;
@@ -505,7 +505,7 @@ pub fn command_preview(plugin: &Plugin, arguments: &[String]) -> Result<String, 
     if is_device_tree_pull(plugin) {
         let options = device_tree_options(arguments)?;
         return Ok(format!(
-            "Ferry native hardware collector --out {} --bundle",
+            "NeoXTerm native hardware collector --out {} --bundle",
             options.output_dir.display()
         ));
     }

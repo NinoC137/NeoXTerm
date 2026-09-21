@@ -1,4 +1,4 @@
-//! `fy all -- <cmd>`：对所有（或按名指定的）在线设备并行执行同一条命令，
+//! `nxt all -- <cmd>`：对所有（或按名指定的）在线设备并行执行同一条命令，
 //! 输出按设备名着色前缀区分。多板一致性检查/批量部署的好帮手。
 
 use crate::adbx;
@@ -109,7 +109,7 @@ pub fn all_cmd(cfg: &Config, filter: &[String], cmd: &str) -> i32 {
     worst
 }
 
-/// `fy all --json`：并行执行并把每台设备的 stdout/stderr/退出码原样收上来。
+/// `nxt all --json`：并行执行并把每台设备的 stdout/stderr/退出码原样收上来。
 pub fn all_json(
     cfg: &Config,
     filter: &[String],

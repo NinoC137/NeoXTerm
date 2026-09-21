@@ -1,5 +1,5 @@
-//! `fy log`：跟日志（journalctl/syslog/dmesg/logcat 自动选）。
-//! `fy top`：多板实时仪表盘（CPU/内存/温度/rootfs，2s 刷新）。
+//! `nxt log`：跟日志（journalctl/syslog/dmesg/logcat 自动选）。
+//! `nxt top`：多板实时仪表盘（CPU/内存/温度/rootfs，2s 刷新）。
 
 use crate::adbx;
 use crate::config::{Config, Device, Transport};
@@ -48,14 +48,14 @@ pub fn log_follow(cfg: &Config, d: &Device, save: Option<&str>) -> std::io::Resu
                     &[],
                 )
             } else {
-                info("串口设备直接进 console（fy bb start 可后台持续录）");
+                info("串口设备直接进 console（nxt bb start 可后台持续录）");
                 crate::blackbox::serial_shell(cfg, &d.name).map(|_| 0)
             }
         }
     }
 }
 
-// ---------------- fy top ----------------
+// ---------------- nxt top ----------------
 
 struct Sample {
     ok: bool,
@@ -187,7 +187,7 @@ pub fn top(cfg: &Config) {
         }
         return;
     }
-    println!("{}", dim("fy top — 2s 刷新，Ctrl-C 退出"));
+    println!("{}", dim("nxt top — 2s 刷新，Ctrl-C 退出"));
     let results: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(vec![String::new(); devs.len()]));
     loop {
         let mut handles = vec![];
@@ -207,7 +207,7 @@ pub fn top(cfg: &Config) {
         print!("\x1b[2J\x1b[H");
         println!(
             "{}   {}",
-            bold("ferry top"),
+            bold("nxt top"),
             dim(&format!("{} 台设备", devs.len()))
         );
         println!();

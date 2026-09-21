@@ -1,4 +1,4 @@
-//! `fy share`：让板子借主机上网。
+//! `nxt share`：让板子借主机上网。
 //! 默认"代理模式"：零 sudo、任何 ssh/adb 可达的板子都能用（内置 HTTP 代理 + 反向隧道）。
 //! `--nat` 模式：直连网段（USB 网卡/网线直连）做真 NAT，全协议通吃（要 sudo）。
 
@@ -59,10 +59,10 @@ pub fn enable(
             if persist {
                 let script = format!("#!/bin/sh\n{}\n", envs);
                 let okk =
-                    sshx::write_remote_file(d, "/etc/profile.d/ferry-proxy.sh", &script, "755")
+                    sshx::write_remote_file(d, "/etc/profile.d/neoxterm-proxy.sh", &script, "755")
                         .map_err(|e| e.to_string())?;
                 if okk {
-                    ok("已写入板端 /etc/profile.d/ferry-proxy.sh（重新登录生效）");
+                    ok("已写入板端 /etc/profile.d/neoxterm-proxy.sh（重新登录生效）");
                 } else {
                     warn("写 /etc/profile.d 失败（板上可能没有这个目录），手动 export 也行");
                 }
@@ -108,7 +108,7 @@ pub fn enable(
                     ),
                     &[],
                 );
-                warn("已设置 Android 全局代理（走 USB 借网）。取消: fy share <dev> --off");
+                warn("已设置 Android 全局代理（走 USB 借网）。取消: nxt share <dev> --off");
             } else {
                 println!(
                     "\n板端 shell 用法:\n  {}\nAndroid 应用层想全局走代理再加 --android-global（会改 settings）。",
@@ -119,7 +119,7 @@ pub fn enable(
                 );
             }
         }
-        Transport::Serial => return Err("串口设备先 `fy up` 打通网络通道再共享上网".into()),
+        Transport::Serial => return Err("串口设备先 `nxt up` 打通网络通道再共享上网".into()),
     }
     Ok(())
 }
@@ -143,11 +143,11 @@ fn enable_nat(_cfg: &Config, d: &Device) -> Result<(), String> {
     let cmd = format!(
         "ip route replace default via {gw} 2>/dev/null || route add default gw {gw}; \
          grep -q nameserver /etc/resolv.conf 2>/dev/null || printf 'nameserver 223.5.5.5\\nnameserver 8.8.8.8\\n' > /etc/resolv.conf; \
-         echo FERRY_NAT_OK",
+         echo NEOXTERM_NAT_OK",
         gw = gw
     );
     let out = sshx::exec_capture(d, &cmd).map_err(|e| e.to_string())?;
-    if !dry() && !out.stdout.contains("FERRY_NAT_OK") {
+    if !dry() && !out.stdout.contains("NEOXTERM_NAT_OK") {
         warn(&format!("板端路由设置可能失败: {}", out.stderr.trim()));
     }
     let mut st = State::load();
@@ -155,7 +155,7 @@ fn enable_nat(_cfg: &Config, d: &Device) -> Result<(), String> {
     st.set_str(&format!("share.{}", d.name), "subnet", &subnet);
     st.save();
     ok(&format!(
-        "{} 已获得完整外网（NAT 模式，全协议）。测试: fy sh {} -- ping -c1 223.5.5.5",
+        "{} 已获得完整外网（NAT 模式，全协议）。测试: nxt sh {} -- ping -c1 223.5.5.5",
         d.name, d.name
     ));
     Ok(())
@@ -209,7 +209,7 @@ pub fn disable(cfg: &Config, d: &Device) -> Result<(), String> {
     Ok(())
 }
 
-/// 当前哪些设备在借网（`fy share --json` / `fy ui` 用）。
+/// 当前哪些设备在借网（`nxt share --json` / `nxt ui` 用）。
 pub fn active() -> Vec<(String, String)> {
     let st = State::load();
     st.doc

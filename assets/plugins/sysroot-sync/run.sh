@@ -1,6 +1,6 @@
 #!/bin/sh
-# Ferry plugin: sync an SSH target's runtime libraries and headers into a host sysroot.
-# The Ferry plugin runner owns SSH option construction. This script never reads passwords.
+# NeoXTerm plugin: sync an SSH target's runtime libraries and headers into a host sysroot.
+# The NeoXTerm plugin runner owns SSH option construction. This script never reads passwords.
 
 set -eu
 
@@ -50,15 +50,15 @@ done
 case "$dest" in
   "~/"*) dest="$HOME/${dest#\~/}" ;;
 esac
-[ -n "${FERRY_DEVICE_HOST:-}" ] || { printf 'sysroot-sync: Ferry did not provide an SSH host\n' >&2; exit 2; }
-[ -n "${FERRY_DEVICE_USER:-}" ] || { printf 'sysroot-sync: Ferry did not provide an SSH user\n' >&2; exit 2; }
-[ -n "${FERRY_SSH_RSH:-}" ] || { printf 'sysroot-sync: Ferry did not provide SSH options\n' >&2; exit 2; }
+[ -n "${NEOXTERM_DEVICE_HOST:-}" ] || { printf 'sysroot-sync: NeoXTerm did not provide an SSH host\n' >&2; exit 2; }
+[ -n "${NEOXTERM_DEVICE_USER:-}" ] || { printf 'sysroot-sync: NeoXTerm did not provide an SSH user\n' >&2; exit 2; }
+[ -n "${NEOXTERM_SSH_RSH:-}" ] || { printf 'sysroot-sync: NeoXTerm did not provide SSH options\n' >&2; exit 2; }
 
 command -v rsync >/dev/null 2>&1 || { printf 'sysroot-sync: rsync is not installed on the host\n' >&2; exit 127; }
 
 if [ "$use_sudo" -eq 1 ]; then
   command -v sudo >/dev/null 2>&1 || { printf 'sysroot-sync: sudo is not installed; use --no-sudo with a writable destination\n' >&2; exit 127; }
-  if [ "${FERRY_PLUGIN_NONINTERACTIVE:-}" = "1" ]; then
+  if [ "${NEOXTERM_PLUGIN_NONINTERACTIVE:-}" = "1" ]; then
     sudo_cmd='sudo -n'
   else
     sudo_cmd='sudo'
@@ -79,17 +79,17 @@ if [ "$delete" -eq 1 ]; then
   delete_arg='--delete'
 fi
 
-remote_prefix="${FERRY_DEVICE_USER}@${FERRY_DEVICE_HOST}:"
+remote_prefix="${NEOXTERM_DEVICE_USER}@${NEOXTERM_DEVICE_HOST}:"
 sync_dir() {
   source_path=$1
   target_parent=$2
   printf '\n==> %s%s -> %s\n' "$remote_prefix" "$source_path" "$target_parent"
   if [ "$use_sudo" -eq 1 ]; then
     # shellcheck disable=SC2086
-    $sudo_cmd rsync -av $delete_arg -e "$FERRY_SSH_RSH" "${remote_prefix}${source_path}" "$target_parent"
+    $sudo_cmd rsync -av $delete_arg -e "$NEOXTERM_SSH_RSH" "${remote_prefix}${source_path}" "$target_parent"
   else
     # shellcheck disable=SC2086
-    rsync -av $delete_arg -e "$FERRY_SSH_RSH" "${remote_prefix}${source_path}" "$target_parent"
+    rsync -av $delete_arg -e "$NEOXTERM_SSH_RSH" "${remote_prefix}${source_path}" "$target_parent"
   fi
 }
 

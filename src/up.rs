@@ -1,4 +1,4 @@
-//! `fy up`：通道爬升 —— 一条命令把板子带到"最好的连接"。
+//! `nxt up`：通道爬升 —— 一条命令把板子带到"最好的连接"。
 //!
 //!   串口 ──自动登录──▶ 探测板况 ──┬─ 板子已有 IP ──▶ 直接认领 ssh
 //!                                ├─ 有 UDC ──▶ 串口灌 USB gadget → 主机配网 → ssh
@@ -102,7 +102,7 @@ impl SerialSession {
                     // password 提示
                     return self.do_password(pass);
                 }
-                Some(1) => return Err("密码不对（fy add 或 devices.toml 里改 password）".into()),
+                Some(1) => return Err("密码不对（nxt add 或 devices.toml 里改 password）".into()),
                 Some(2) | Some(3) => {
                     step(&format!("发用户名 {}", user));
                     let mu = self.exp.mark();
@@ -160,21 +160,21 @@ impl SerialSession {
         );
         match r {
             Some(0) | Some(1) | Some(2) | Some(3) => {
-                Err("密码不对（fy add 或 devices.toml 里改 password）".into())
+                Err("密码不对（nxt add 或 devices.toml 里改 password）".into())
             }
             Some(_) => self.verify_shell(),
             None => self.verify_shell(), // 可能是无回显的静默 shell
         }
     }
 
-    /// 用算术展开确认真 shell（命令行回显里是 FERRYOK$((1+1))，只有真 shell 求值才出 FERRYOK2）。
+    /// 用算术展开确认真 shell（命令行回显里是 NEOXTERMOK$((1+1))，只有真 shell 求值才出 NEOXTERMOK2）。
     fn verify_shell(&mut self) -> Result<(), String> {
         for _ in 0..2 {
             let m = self.exp.mark();
-            self.send("echo FERRYOK$((1+1))");
+            self.send("echo NEOXTERMOK$((1+1))");
             if self
                 .exp
-                .expect_from(m, &["FERRYOK2"], Duration::from_secs(3))
+                .expect_from(m, &["NEOXTERMOK2"], Duration::from_secs(3))
                 .is_some()
             {
                 return Ok(());
@@ -220,7 +220,7 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
     let d = cfg
         .find(name)
         .ok_or_else(|| format!("没有设备 '{}'", name))?;
-    println!("{}", bold(&format!("fy up {} — 通道爬升", d.name)));
+    println!("{}", bold(&format!("nxt up {} — 通道爬升", d.name)));
 
     // 0) 已经是可达的 ssh？
     if d.transport == Transport::Ssh && !d.host.is_empty() {
@@ -241,7 +241,7 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
             ok(&format!("adb 在线 ({})", why));
             let f = fingerprint::remember(&d, "");
             let _ = f;
-            info("提示: fy wifi <dev> 可切 WiFi adb；fy share <dev> 可借网");
+            info("提示: nxt wifi <dev> 可切 WiFi adb；nxt share <dev> 可借网");
             return Ok(());
         }
         step(&format!("adb 不在线 ({})", why));
@@ -275,7 +275,7 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
                 None
             }
         })
-        .ok_or("没有串口可用（fy add 时加 --serial /dev/xxx，或 fy scan 看看）")?;
+        .ok_or("没有串口可用（nxt add 时加 --serial /dev/xxx，或 nxt scan 看看）")?;
     if dry() {
         println!(
             "{} 串口自动登录 {} @{} → 探测板况 → 配网 → 爬升 ssh（dry-run 不实际操作串口）",
@@ -287,7 +287,7 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
     }
     if crate::blackbox::running_for(&d.name) {
         return Err(format!(
-            "黑匣子占着串口。fy bb stop {} 后再 up（之后可再开）",
+            "黑匣子占着串口。nxt bb stop {} 后再 up（之后可再开）",
             d.name
         ));
     }
@@ -353,9 +353,9 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
         // 串口灌一段精简 gadget 配置（configfs → g_ether 兜底）
         let seq: &[&str] = &[
             "mount -t configfs none /sys/kernel/config 2>/dev/null; modprobe libcomposite 2>/dev/null; true",
-            "G=/sys/kernel/config/usb_gadget/ferry; mkdir -p $G && cd $G && echo 0x1d6b > idVendor && echo 0x0104 > idProduct; true",
-            "cd /sys/kernel/config/usb_gadget/ferry && mkdir -p strings/0x409 configs/c.1 functions/ncm.usb0 && echo ferry > strings/0x409/manufacturer && echo usbnet > strings/0x409/product && (cat /etc/machine-id 2>/dev/null || echo f1) > strings/0x409/serialnumber; true",
-            "cd /sys/kernel/config/usb_gadget/ferry && ln -sf functions/ncm.usb0 configs/c.1/ 2>/dev/null; ls /sys/class/udc | head -1 > UDC 2>/dev/null || echo UDC_FAIL",
+            "G=/sys/kernel/config/usb_gadget/neoxterm; mkdir -p $G && cd $G && echo 0x1d6b > idVendor && echo 0x0104 > idProduct; true",
+            "cd /sys/kernel/config/usb_gadget/neoxterm && mkdir -p strings/0x409 configs/c.1 functions/ncm.usb0 && echo neoxterm > strings/0x409/manufacturer && echo usbnet > strings/0x409/product && (cat /etc/machine-id 2>/dev/null || echo f1) > strings/0x409/serialnumber; true",
+            "cd /sys/kernel/config/usb_gadget/neoxterm && ln -sf functions/ncm.usb0 configs/c.1/ 2>/dev/null; ls /sys/class/udc | head -1 > UDC 2>/dev/null || echo UDC_FAIL",
             "sleep 1; (ip addr add 10.55.0.2/30 dev usb0 2>/dev/null; ip link set usb0 up 2>/dev/null) || ifconfig usb0 10.55.0.2 netmask 255.255.255.252 up 2>/dev/null; true",
         ];
         let mut gadget_ok = true;
@@ -419,7 +419,7 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
                 let _ = run_inherit(&argv(&["sudo", "ip", "link", "set", &nif, "up"]), &[]);
             }
             if !has_sshd {
-                warn("板上没有 dropbear/sshd —— USB 网通了，但 ssh 登不进。串口继续当家（fy sh）");
+                warn("板上没有 dropbear/sshd —— USB 网通了，但 ssh 登不进。串口继续当家（nxt sh）");
             } else {
                 let _ = ss.run("pgrep dropbear >/dev/null 2>&1 || pgrep sshd >/dev/null 2>&1 || (dropbear -R 2>/dev/null || dropbear 2>/dev/null || /usr/sbin/sshd 2>/dev/null) ; true", Duration::from_secs(5));
                 for _ in 0..10 {
@@ -472,7 +472,7 @@ pub fn up(cfg: &mut Config, name: &str, boot_ok: bool) -> Result<(), String> {
     dd.dev = Some(port);
     cfg.devices.insert(dd.name.clone(), dd);
     let _ = cfg.save();
-    warn("没爬到 ssh，但串口 shell 是好的：fy sh 直接用；建议板里补装 dropbear。指纹已入档。");
+    warn("没爬到 ssh，但串口 shell 是好的：nxt sh 直接用；建议板里补装 dropbear。指纹已入档。");
     Ok(())
 }
 
@@ -495,7 +495,7 @@ fn promote_to_ssh(
         );
         let _ = ss.run(&cmd, Duration::from_secs(6));
     } else {
-        step("本机还没有 ssh 公钥（回头 fy keyup 会自动生成并安装）");
+        step("本机还没有 ssh 公钥（回头 nxt keyup 会自动生成并安装）");
     }
     facts.last_ip = ip.to_string();
     facts.last_seen = now_epoch();
@@ -516,7 +516,7 @@ fn promote_to_ssh(
         dd.name, dd.user, dd.host, dd.port
     ));
     info(&format!(
-        "试试: fy sh {}   fy push {} <文件>   fy share {}（借主机上网）",
+        "试试: nxt sh {}   nxt push {} <文件>   nxt share {}（借主机上网）",
         dd.name, dd.name, dd.name
     ));
     after_ssh_ready(cfg, &dd, facts)?;

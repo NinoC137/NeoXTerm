@@ -303,7 +303,7 @@ pub fn probe(d: &Device) -> (bool, String) {
             } else {
                 (
                     false,
-                    format!("{} 台设备，请 fy add 时指定 serial", devs.len()),
+                    format!("{} 台设备，请 nxt add 时指定 serial", devs.len()),
                 )
             }
         }

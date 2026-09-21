@@ -1,11 +1,11 @@
 //! 隧道保活与断线自愈。
 //!
-//! ferry 的端口转发和"借网"都挂在 ssh 的 ControlMaster 上。板子重启一次、
-//! WiFi 抖一下、USB 网卡重新枚举——master 就没了，于是：`fy fwd ls` 里所有
+//! neoxterm 的端口转发和"借网"都挂在 ssh 的 ControlMaster 上。板子重启一次、
+//! WiFi 抖一下、USB 网卡重新枚举——master 就没了，于是：`nxt fwd ls` 里所有
 //! 转发变成"断"，gdb 连不上，板子上的 `http_proxy` 也哑了，而你往往是过了
 //! 十分钟才发现。
 //!
-//! `fy watch` 起一个后台守护进程盯着：周期性 `ssh -O check`，一旦发现掉线就
+//! `nxt watch` 起一个后台守护进程盯着：周期性 `ssh -O check`，一旦发现掉线就
 //! 重建 master，并**把这台设备的所有转发和 share 反向隧道重新挂回去**。
 //! 连不上就指数退避（最长 60 秒一次），恢复时桌面通知你一声。
 
@@ -134,7 +134,7 @@ pub fn daemon_main() -> i32 {
         .and_then(|v| v.parse::<u64>().ok())
         .unwrap_or(DEFAULT_INTERVAL)
         .clamp(3, 3600);
-    eprintln!("ferry watchd: 每 {}s 检查一次隧道", interval);
+    eprintln!("nxt watchd: 每 {}s 检查一次隧道", interval);
     // 每台设备各自的退避倍数：连不上的板子不该拖慢其它板子的检查
     let mut backoff: std::collections::HashMap<String, u64> = Default::default();
     let mut down: std::collections::HashMap<String, bool> = Default::default();
@@ -162,7 +162,7 @@ pub fn daemon_main() -> i32 {
                 .unwrap_or(false);
             if alive {
                 if down.get(&name).copied().unwrap_or(false) {
-                    notify("ferry", &format!("{} 的隧道已恢复", name));
+                    notify("NeoXTerm", &format!("{} 的隧道已恢复", name));
                     eprintln!("[{}] 恢复", name);
                 }
                 down.insert(name.clone(), false);
@@ -180,7 +180,7 @@ pub fn daemon_main() -> i32 {
             match reattach(&cfg, &d) {
                 Ok(n) => {
                     eprintln!("[{}] 重连成功，恢复了 {} 条转发/隧道", name, n);
-                    notify("ferry", &format!("{} 已重连，{} 条转发已恢复", name, n));
+                    notify("NeoXTerm", &format!("{} 已重连，{} 条转发已恢复", name, n));
                     down.insert(name.clone(), false);
                     backoff.insert(name.clone(), 1);
                     bump(&name, "reconnects");
@@ -260,7 +260,7 @@ fn bump(dev: &str, key: &str) {
 mod tests {
     use super::*;
 
-    // 注意：这里刻意不碰 FERRY_HOME —— 环境变量是进程级的，测试并行跑时
+    // 注意：这里刻意不碰 NEOXTERM_HOME —— 环境变量是进程级的，测试并行跑时
     // 改它会把同进程里其它测试（比如 ui 的端到端）的配置目录一起换掉。
     #[test]
     fn status_reads_without_blowing_up() {

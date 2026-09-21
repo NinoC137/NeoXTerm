@@ -1,4 +1,4 @@
-//! `fy ui` —— 本地 Web GUI。
+//! `nxt ui` —— 本地 Web GUI。
 //! 主区是一个**真·系统终端**（PTY 跑用户 shell，xterm.js 经 WebSocket 双向流）；
 //! 侧栏是便捷工具（设备列表/实时状态、快捷动作、转发、黑匣子、借网）。
 //! 侧栏动作把命令"注入"到终端里执行，所见即所得。零依赖。
@@ -25,7 +25,7 @@ pub fn run(port: u16, open: bool) -> std::io::Result<()> {
         e
     })?;
     let url = format!("http://127.0.0.1:{}", port);
-    ok(&format!("ferry GUI 已启动: {}", cyan(&url)));
+    ok(&format!("nxt GUI 已启动: {}", cyan(&url)));
     info("主区是真实系统终端，侧栏是便捷工具。Ctrl-C 关闭。");
     if open {
         open_browser(&url);
@@ -68,7 +68,7 @@ fn handle_terminal(req: Request, stream: TcpStream) -> std::io::Result<()> {
     let rows: u16 = req.q("rows").and_then(|s| s.parse().ok()).unwrap_or(30);
     let cols: u16 = req.q("cols").and_then(|s| s.parse().ok()).unwrap_or(110);
 
-    // 让终端里能直接敲 fy：把自身所在目录塞进 PATH
+    // 让终端里能直接敲 nxt：把自身所在目录塞进 PATH
     let mut env = vec![];
     if let Some(dir) = self_exe().parent() {
         let path = std::env::var("PATH").unwrap_or_default();
@@ -77,7 +77,7 @@ fn handle_terminal(req: Request, stream: TcpStream) -> std::io::Result<()> {
     let pty = match Pty::spawn_shell(rows, cols, &env) {
         Ok(p) => p,
         Err(e) => {
-            let _ = wsutil::ws_write_text(&mut ws, &format!("\r\n[ferry] 打不开终端: {}\r\n", e));
+            let _ = wsutil::ws_write_text(&mut ws, &format!("\r\n[nxt] 打不开终端: {}\r\n", e));
             return Ok(());
         }
     };
@@ -111,7 +111,7 @@ fn handle_terminal(req: Request, stream: TcpStream) -> std::io::Result<()> {
         if let Ok(mut o) = ws_out_r.lock() {
             let _ = wsutil::ws_write_text(
                 &mut *o,
-                "\r\n\x1b[2m[ferry] 终端会话已结束，刷新页面重开]\x1b[0m\r\n",
+                "\r\n\x1b[2m[nxt] 终端会话已结束，刷新页面重开]\x1b[0m\r\n",
             );
             let _ = wsutil::ws_write(&mut *o, 0x8, b""); // Close
         }
@@ -345,8 +345,8 @@ mod tests {
     #[test]
     fn end_to_end_terminal_and_api() {
         // 独立配置目录 + 两台设备
-        let home = std::env::temp_dir().join(format!("ferry_ui_test_{}", std::process::id()));
-        std::env::set_var("FERRY_HOME", &home);
+        let home = std::env::temp_dir().join(format!("neoxterm_ui_test_{}", std::process::id()));
+        std::env::set_var("NEOXTERM_HOME", &home);
         std::env::set_var("SHELL", "/bin/bash");
         let _ = std::fs::remove_dir_all(&home);
         let mut cfg = Config::load();
@@ -372,7 +372,7 @@ mod tests {
         // --- HTTP: 首页 + /api ---
         let (_h, body) = http_get(port, "/");
         assert!(
-            body.contains("ferry") && body.contains("xterm"),
+            body.contains("NeoXTerm") && body.contains("xterm"),
             "首页应含 xterm"
         );
         let (_h, dj) = http_get(port, "/api/devices");
